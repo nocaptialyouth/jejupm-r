@@ -16,6 +16,8 @@
     activeFilters: $("#activeFilters"),
     dialog: $("#detailDialog"),
     dialogContent: $("#dialogContent"),
+    homepageDialog: $("#homepageDialog"),
+    homepageDialogContent: $("#homepageDialogContent"),
     favoriteToggle: $("#favoriteToggle"),
     toast: $("#toast"),
   };
@@ -203,7 +205,7 @@
         <div class="card-actions">
           ${phoneLink}
           <a href="${mapUrl(item)}" target="_blank" rel="noopener">지도 보기</a>
-          <a href="${escapeHtml(homepage || homepageSearchUrl(item))}" target="_blank" rel="noopener">${homepage ? "홈페이지" : "홈페이지 찾기"}</a>
+          <a href="#" data-action="homepage-select" data-id="${item.id}" class="btn-link-action">${homepage ? "홈페이지" : "홈페이지 찾기"}</a>
           <button class="detail-button" data-action="detail">상세 보기</button>
         </div>
       </article>`;
@@ -322,7 +324,7 @@
           ${phoneAction}
           <a href="${mapUrl(item)}" target="_blank" rel="noopener">네이버 지도 ↗</a>
           <a href="${kakaoMapUrl(item)}" target="_blank" rel="noopener">카카오맵 ↗</a>
-          <a href="${escapeHtml(homepage || homepageSearchUrl(item))}" target="_blank" rel="noopener">${homepage ? "공식 홈페이지 ↗" : "홈페이지 찾기 ↗"}</a>
+          <a href="#" data-action="homepage-select" data-id="${item.id}" class="btn-link-action">${homepage ? "공식 홈페이지 ↗" : "홈페이지 찾기 ↗"}</a>
           <a href="${youtubeUrl(item)}" target="_blank" rel="noopener" style="background: #ffebeb; border-color: #ffd6d6; color: #e50914;">유튜브 검색 ↗</a>
           <button type="button" data-copy="${escapeHtml(item.address)}">주소 복사</button>
           <button type="button" data-share="${escapeHtml(item.id)}">정보 공유</button>
@@ -333,6 +335,35 @@
         </dl>
       </div>`;
     elements.dialog.showModal();
+  }
+
+  function openHomepageSelect(item) {
+    const homepage = homepageUrl(item);
+    const searchUrl = homepageSearchUrl(item);
+    
+    elements.homepageDialogContent.innerHTML = `
+      <div class="homepage-dialog-header">
+        <div>
+          <p>${escapeHtml(item.district)} · ${escapeHtml(item.type)}</p>
+          <h3 id="homepageDialogTitle">${escapeHtml(item.name)}</h3>
+        </div>
+        <button class="homepage-dialog-close" aria-label="닫기">×</button>
+      </div>
+      <div class="homepage-dialog-body">
+        <p class="homepage-dialog-desc">
+          병원 홈페이지가 만료되었거나 일시적인 문제로 접속이 되지 않는 경우가 있습니다. 원하시는 이동 방법을 선택해 주세요.
+        </p>
+        <a href="${escapeHtml(homepage)}" class="homepage-btn-option primary" target="_blank" rel="noopener">
+          <span>🌐 공식 홈페이지 바로가기</span>
+          <span class="btn-icon">›</span>
+        </a>
+        <a href="${escapeHtml(searchUrl)}" class="homepage-btn-option naver" target="_blank" rel="noopener">
+          <span>💚 네이버에서 병원 검색하기</span>
+          <span class="btn-icon">›</span>
+        </a>
+      </div>
+    `;
+    elements.homepageDialog.showModal();
   }
 
   function saveFavorites() {
@@ -517,6 +548,10 @@
     const item = data.find((record) => String(record.id) === card.dataset.id);
     if (!item) return;
     if (action.dataset.action === "detail") openDetail(item);
+    if (action.dataset.action === "homepage-select") {
+      event.preventDefault();
+      openHomepageSelect(item);
+    }
     if (action.dataset.action === "favorite") {
       const id = String(item.id);
       state.favorites.has(id) ? state.favorites.delete(id) : state.favorites.add(id);
@@ -540,6 +575,21 @@
         await copyText(getShareText(item));
         showToast("상세 정보를 복사했습니다. 필요한 곳에 붙여넣어 공유하세요!");
       }
+    }
+    const homepageSelectBtn = event.target.closest('[data-action="homepage-select"]');
+    if (homepageSelectBtn) {
+      event.preventDefault();
+      const item = data.find((record) => String(record.id) === homepageSelectBtn.dataset.id);
+      if (item) openHomepageSelect(item);
+    }
+  });
+
+  elements.homepageDialog.addEventListener("click", (event) => {
+    if (event.target === elements.homepageDialog || event.target.closest(".homepage-dialog-close")) {
+      elements.homepageDialog.close();
+    }
+    if (event.target.closest(".homepage-btn-option")) {
+      elements.homepageDialog.close();
     }
   });
 
