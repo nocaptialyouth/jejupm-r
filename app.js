@@ -205,7 +205,9 @@
         <div class="card-actions">
           ${phoneLink}
           <a href="${mapUrl(item)}" target="_blank" rel="noopener">지도 보기</a>
-          <a href="#" data-action="homepage-select" data-id="${item.id}" class="btn-link-action">${homepage ? "홈페이지" : "홈페이지 찾기"}</a>
+          ${homepage
+            ? `<a href="#" data-action="homepage-select" data-id="${escapeHtml(item.id)}" class="btn-link-action">홈페이지</a>`
+            : `<a href="${escapeHtml(homepageSearchUrl(item))}" target="_blank" rel="noopener" class="btn-link-action">홈페이지 찾기</a>`}
           <button class="detail-button" data-action="detail">상세 보기</button>
         </div>
       </article>`;
@@ -324,7 +326,9 @@
           ${phoneAction}
           <a href="${mapUrl(item)}" target="_blank" rel="noopener">네이버 지도 ↗</a>
           <a href="${kakaoMapUrl(item)}" target="_blank" rel="noopener">카카오맵 ↗</a>
-          <a href="#" data-action="homepage-select" data-id="${item.id}" class="btn-link-action">${homepage ? "공식 홈페이지 ↗" : "홈페이지 찾기 ↗"}</a>
+          ${homepage
+            ? `<a href="#" data-action="homepage-select" data-id="${item.id}" class="btn-link-action">공식 홈페이지 ↗</a>`
+            : `<a href="${escapeHtml(homepageSearchUrl(item))}" target="_blank" rel="noopener" class="btn-link-action">홈페이지 찾기 ↗</a>`}
           <a href="${youtubeUrl(item)}" target="_blank" rel="noopener" style="background: #ffebeb; border-color: #ffd6d6; color: #e50914;">유튜브 검색 ↗</a>
           <button type="button" data-copy="${escapeHtml(item.address)}">주소 복사</button>
           <button type="button" data-share="${escapeHtml(item.id)}">정보 공유</button>
