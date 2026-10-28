@@ -1,314 +1,1712 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#081c33">
-  <meta name="description" content="제주특별자치도 제주시·서귀포시 재활의학과·재활요양·요양병원 검색 가이드">
-  <title>제주 재활기관 찾기</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- 구글 애드센스 연동 스크립트 -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8777128879154634" crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매일가계부 — 주원 가족 노션 워크스페이스</title>
+    <meta name="description" content="구글 스프레드시트 양방향 실시간 연동 & 노션 스타일 가족 가계부 대시보드">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Firebase Web SDK v10 -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- Custom Notion Style CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="hero">
-    <nav class="topbar" aria-label="상단 안내">
-      <div class="brand-group" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-        <a class="brand" href="#top" aria-label="처음으로">
-          <span class="brand-mark" aria-hidden="true">＋</span>
-          <span>제주 재활기관</span>
-        </a>
 
-      </div>
-      <div class="top-actions">
-        <a class="silson-link" href="https://www.silson24.or.kr/claim/web/" target="_blank" rel="noopener">실손24서비스 ↗</a>
-        <span class="edition">2026 · 07 DATA</span>
-      </div>
-    </nav>
+    <!-- Top Notion Breadcrumb & Action Bar -->
+    <header class="notion-topbar">
+        <div class="notion-breadcrumbs">
+            <span class="crumb-item"><i class="fa-solid fa-house-chimney" style="color:#e07a5f;"></i> 주원네 가족 워크스페이스</span>
+            <span class="crumb-sep">/</span>
+            <span class="crumb-item active">📒 매일가계부</span>
+            <span class="sync-pill" id="sync-banner">
+                <span class="status-dot-pulse"></span>
+                <span id="sync-banner-text">구글 시트 실시간 연동중</span>
+                <span class="sync-time" id="banner-updated-time"></span>
+            </span>
+        </div>
 
-    <div class="hero-inner" id="top">
-      <p class="eyebrow">제주특별자치도 제주시·서귀포시 재활·요양 전문 기관 14곳 빠른 탐색</p>
-      <h1>내게 맞는 재활기관을<br><em>제주에서 한 번에 찾으세요.</em></h1>
-      <p class="lead">기관명, 제주시·서귀포시, 질환, 입원재활, 산재·자동차보험 여부를 한 검색창에서 확인할 수 있습니다.</p>
+        <div class="notion-topbar-actions">
+            <div class="auto-sync-pill" title="자동 동기화 주기 설정">
+                <i class="fa-solid fa-bolt" style="color:#d97706;"></i>
+                <select id="auto-sync-interval-select">
+                    <option value="5" selected>5초 자동동기화</option>
+                    <option value="10">10초 자동동기화</option>
+                    <option value="30">30초 자동동기화</option>
+                    <option value="0">수동 동기화</option>
+                </select>
+            </div>
 
-      <div class="search-shell">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/></svg>
-        <label class="sr-only" for="searchInput">재활기관 통합 검색</label>
-        <input id="searchInput" type="search" autocomplete="off" placeholder="예: 회복기 재활, 제주시, 요양병원, 산재, 제주권역재활병원">
-        <kbd>⌘ K</kbd>
-      </div>
-      <div id="heroSuggestions" class="hero-suggestions" aria-live="polite" hidden></div>
+            <button class="notion-btn notion-btn-default btn-sm" id="top-sync-btn" title="구글 시트 즉시 동기화">
+                <i class="fa-solid fa-rotate-right" id="top-sync-icon"></i>
+                <span>시트 동기화</span>
+            </button>
 
-      <div class="quick-filters" aria-label="빠른 조건">
-        <span class="quick-filter-label" style="font-weight: 800; color: rgba(255, 255, 255, 0.75); font-size: 14px; align-self: center; margin-right: 6px; letter-spacing: -0.02em; flex-shrink: 0;">바로가기:</span>
-        <button data-preset="recovery">회복기 지정</button>
-        <button data-preset="rehab">재활의학과 있음</button>
-        <button data-preset="inpatient">입원재활</button>
-        <button data-preset="care">요양병원</button>
-        <button data-preset="workers">산재 재활인증</button>
-        <button data-preset="auto">자동차보험</button>
-        <button data-preset="oriental">한방재활</button>
-        <button data-preset="pediatric">소아재활</button>
-        <button data-preset="dialysis">투석가능</button>
-      </div>
+            <button class="notion-btn notion-btn-warm btn-sm" onclick="openCreateSheetModal()" title="구글 스프레드시트에 새 시트(탭) 생성">
+                <i class="fa-solid fa-folder-plus"></i>
+                <span>+ 구글 새 시트 생성</span>
+            </button>
 
-      <!-- 제주 행정구역 퀵 필터 칩스 -->
-      <div class="drawer-row" id="districtRow"></div>
+            <a href="https://docs.google.com/spreadsheets/d/16xlN-rZwRRsOhdylZGZZL1-FF3flTthARoE6Tr4Xwrg/edit?gid=7284588#gid=7284588" target="_blank" rel="noopener noreferrer" class="notion-btn notion-btn-green btn-sm">
+                <i class="fa-solid fa-file-excel"></i> 구글시트 열기 ↗
+            </a>
+
+            <a href="https://recepit-lilac.vercel.app/" target="_blank" rel="noopener noreferrer" class="notion-btn notion-btn-purple btn-sm">
+                <i class="fa-solid fa-receipt"></i> 영수증 관리 ↗
+            </a>
+
+            <div class="user-menu-group">
+                <span class="user-badge" id="top-user-badge" onclick="openChangePasswordModal()" style="cursor:pointer;" title="클릭하여 비밀번호 변경">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span id="user-role-display">주관리자</span>
+                </span>
+                <button class="notion-btn notion-btn-default btn-xs" id="btn-open-user-mgmt-modal" onclick="openAdminUserMgmtModal()" style="display:none;" title="회원가입 승인 관리">
+                    👑 승인 <span id="pending-user-badge" class="pending-count">0</span>
+                </button>
+                <button class="notion-btn notion-btn-ghost btn-xs" onclick="handleAuthLogout()" title="로그아웃">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Notion Page Container -->
+    <main class="notion-page-container">
+
+        <!-- Page Title Area -->
+        <div class="notion-page-header">
+            <h1 class="notion-page-title">매일가계부</h1>
+            <div class="notion-page-quick-tools">
+                <button class="notion-btn notion-btn-warm btn-sm" onclick="copyMacroCodeDirect()" title="구글 시트 자동 저장 & 삭제 지원 최신 V5.0 무결점 매크로 복사">
+                    📋 최신 매크로(V5.0) 복사
+                </button>
+                <button class="notion-btn notion-btn-blue btn-sm" onclick="openUrlConfigModal()" title="구글 Apps Script 새 배포 후 발급받은 웹앱 URL을 웹에 등록합니다">
+                    <i class="fa-solid fa-link"></i> 새 배포 URL 연결
+                </button>
+                <button class="notion-btn notion-btn-default btn-sm" onclick="resetLocalEditsToSheet()" title="웹 임시 수정내역을 비우고 구글 시트 원본과 100% 일치시킵니다">
+                    🔄 시트 원본으로 초기화
+                </button>
+                <button class="notion-btn notion-btn-default btn-sm" onclick="openKakaoModal()">
+                    💬 카톡 알림문구
+                </button>
+                <button class="notion-btn notion-btn-default btn-sm" onclick="triggerSnapshotBackup()">
+                    💾 1초 백업저장
+                </button>
+            </div>
+        </div>
+
+        <!-- Warm Cream Callout Guide Box (Matches Uploaded Image) -->
+        <section class="notion-callout-guide">
+            <div class="guide-header">
+                <span class="guide-icon">🥞</span>
+                <span class="guide-title">가이드 & 구글 스프레드시트 실시간 동기화 안내 (V5.0 단방향 자동저장 완벽지원)</span>
+            </div>
+            <div class="guide-toggles">
+                <details class="notion-toggle" open>
+                    <summary><span class="toggle-arrow">▶</span> 🍊 [핵심 안내] 웹에서 기입·수정·삭제한 내용이 구글 시트에 자동으로 저장되게 하려면?</summary>
+                    <div class="toggle-content">
+                        <p>웹(<strong>ju-mu-five.vercel.app</strong>)에서 수정한 내용이 구글 스프레드시트(<strong>량신</strong>)에 100% 자동 저장·삭제되도록 아래 순서로 단 1번만 매크로를 업데이트해주세요:</p>
+                        <ul>
+                            <li><strong>1단계 (코드 복사):</strong> 우측 상단의 <button class="notion-btn notion-btn-warm btn-xs" onclick="copyMacroCodeDirect()">📋 최신 매크로(V5.0) 복사</button> 버튼을 누릅니다.</li>
+                            <li><strong>2단계 (붙여넣기):</strong> 스프레드시트 상단 메뉴 <code>[확장 프로그램] &gt; [Apps Script]</code>를 열고, <strong>기존 코드를 전체 삭제</strong>한 뒤 복사한 코드를 붙여넣고 <strong>저장(💾)</strong>합니다. (편집기에서 [실행]을 누르면 <code>testConnection</code>이 작동해 "스프레드시트 정상 연결 확인" 로그가 뜹니다.)</li>
+                            <li><strong>3단계 (배포 & 연결 — 둘 중 하나 선택):</strong>
+                                <br>• <strong>방법 A (추천·가장 간편):</strong> 우측 상단 <code>[배포] &gt; [배포 관리]</code> ➡️ 연필(✏️ 수정) 클릭 ➡️ 버전을 <strong>[새 버전]</strong>으로 선택 후 <code>[배포]</code> 클릭! (기존 URL 그대로 즉시 연결됨)
+                                <br>• <strong>방법 B (새 배포를 누른 경우):</strong> <code>[배포] &gt; [새 배포]</code> (액세스: <strong>모든 사용자</strong>)를 누르셨다면, 화면에 나오는 <strong>웹 앱 URL</strong>을 복사하여 상단 <button class="notion-btn notion-btn-blue btn-xs" onclick="openUrlConfigModal()"><i class="fa-solid fa-link"></i> 새 배포 URL 연결</button> 버튼을 눌러 붙여넣어 주시면 즉시 연동됩니다!
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+                <details class="notion-toggle">
+                    <summary><span class="toggle-arrow">▶</span> 🍊 매일가계부 속성설명 / 카테고리 & 새로운 시트 추가방법</summary>
+                    <div class="toggle-content">
+                        <p>상단 우측의 <strong>[+ 구글 새 시트 생성]</strong> 버튼을 누르면 원하는 시트 이름(예: <code>2026_10월_생활비가계부</code>, <code>주원_육아용품장부</code> 등)으로 구글 스프레드시트 안에 <strong>새로운 시트(탭)가 즉시 생성</strong>되며 현재 데이터를 깔끔한 표 형태로 내보낼 수 있습니다.</p>
+                        <ul>
+                            <li><span class="notion-tag tag-green">수입/지원금</span> 부모급여, 아동수당, 만기예금 수령 등 자산 유입</li>
+                            <li><span class="notion-tag tag-purple">저축/적금/청약</span> 걸음마 적금, 하나은행, 굴비적금, 청년미래적금, 한투 ISA 등 미래 자산</li>
+                            <li><span class="notion-tag tag-red">지출/병원/조리원</span> 산후조리원, 산후도우미, 병원 진료비, 생활 고정지출 등</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Main 2-Column Notion Body: Left Sidebar (MENU) + Right Database Content -->
+        <div class="notion-body-layout">
+
+            <!-- ================= LEFT SIDEBAR (MENU & GOAL BOARD) ================= -->
+            <aside class="notion-sidebar">
+                <div class="sidebar-card">
+                    <div class="sidebar-menu-header">
+                        <span class="menu-icon-box">📓</span>
+                        <span class="menu-title-text">MENU</span>
+                    </div>
+                    <div class="sidebar-divider-blue"></div>
+
+                    <div class="sidebar-home-label">
+                        <span>🏠</span> <em>HOME</em>
+                    </div>
+
+                    <!-- Navigation Links (Matches Notion Screenshot) -->
+                    <nav class="notion-side-nav sys-nav">
+                        <button class="nav-tab active" data-tab="dashboard">
+                            <span class="nav-emoji">🌍</span>
+                            <span class="nav-label">매일가계부 (통합)</span>
+                        </button>
+                        <button class="nav-tab" data-tab="savings-ledger">
+                            <span class="nav-emoji">🗂️</span>
+                            <span class="nav-label">적금/저축 누적장부</span>
+                        </button>
+                        <button class="nav-tab" data-tab="maturity-master">
+                            <span class="nav-emoji">💳</span>
+                            <span class="nav-label">적금마스터 & 소유자</span>
+                        </button>
+                        <button class="nav-tab" data-tab="baby-milestones">
+                            <span class="nav-emoji">🗓️</span>
+                            <span class="nav-label">목표관리 (아기지원금)</span>
+                        </button>
+                        <button class="nav-tab" data-tab="hospital-expenses">
+                            <span class="nav-emoji">🏥</span>
+                            <span class="nav-label">자산/환불 (병원·조리원)</span>
+                        </button>
+                        <button class="nav-tab" data-tab="gsheet-settings">
+                            <span class="nav-emoji">⚙️</span>
+                            <span class="nav-label">구글시트 연동설정</span>
+                        </button>
+                    </nav>
+
+                    <!-- Goal Board Header + "새로 만들기" Blue Button -->
+                    <div class="goal-board-bar">
+                        <span class="goal-board-pill"><i class="fa-solid fa-sliders"></i> 목표보드</span>
+                        <div class="goal-board-actions">
+                            <button class="notion-new-blue-btn" id="btn-open-deposit-modal" title="새 가계부/입금 내역 기입">
+                                새로 만들기 <i class="fa-solid fa-chevron-down" style="font-size:0.65rem; margin-left:2px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Goal Card (Matches "🍩 15억모으기" Card in Screenshot) -->
+                    <div class="notion-goal-card" onclick="openGoalSettingPrompt()" title="클릭하여 목표 금액 수정">
+                        <div class="goal-card-title">
+                            <span>🍩</span>
+                            <strong id="goal-title-display">1억 모으기 (가족목표)</strong>
+                            <i class="fa-solid fa-pen" style="font-size:0.68rem; color:#9b9a97; margin-left:auto;"></i>
+                        </div>
+                        <p class="goal-card-desc">
+                            현재자산은 <strong class="highlight-coral" id="goal-current-asset">₩50,600,000원</strong>,<br>
+                            목표금액까지 <strong class="highlight-coral" id="goal-remain-pct">49.4%</strong> 남았습니다.
+                        </p>
+                        <div class="goal-segmented-bar-wrap">
+                            <div class="goal-segmented-bar" id="goal-segmented-bar">
+                                <!-- Injected 10 segments -->
+                            </div>
+                            <span class="goal-pct-num" id="goal-achieved-pct">51%</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Add Buttons at Bottom of Sidebar -->
+                    <button class="notion-ghost-new-page" id="btn-open-new-product-modal">
+                        + 새 적금/자산 상품 등록
+                    </button>
+                    <button class="notion-ghost-new-page" onclick="openCreateSheetModal()" style="margin-top:0.35rem;">
+                        + 구글 스프레드시트 새 시트 생성
+                    </button>
+                </div>
+
+                <!-- Compact Mini Calendar in Sidebar -->
+                <div class="sidebar-card calendar-card" style="margin-top: 1rem;">
+                    <div class="calendar-header">
+                        <button class="btn-cal-nav" id="cal-prev-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                        <h3 class="calendar-month-title" id="cal-month-title">2026년 8월</h3>
+                        <button class="btn-cal-nav" id="cal-next-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="cal-day-name sunday">일</div>
+                        <div class="cal-day-name">월</div>
+                        <div class="cal-day-name">화</div>
+                        <div class="cal-day-name">수</div>
+                        <div class="cal-day-name">목</div>
+                        <div class="cal-day-name">금</div>
+                        <div class="cal-day-name saturday">토</div>
+                    </div>
+                    <div class="calendar-days-grid" id="calendar-days-container"></div>
+
+                    <div class="daily-notes-section">
+                        <div class="daily-notes-header">
+                            <span class="selected-date-badge" id="selected-date-display">2026년 08월 07일</span>
+                            <button class="notion-btn notion-btn-default btn-xs" id="btn-open-schedule-modal">
+                                <i class="fa-solid fa-plus"></i> 메모 추가
+                            </button>
+                        </div>
+                        <div class="daily-notes-list" id="daily-notes-list"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ================= RIGHT MAIN CONTENT AREA ================= -->
+            <div class="notion-main-content">
+
+                <!-- ================= TAB 1: DASHBOARD (매일가계부 통합) ================= -->
+                <section class="tab-page active" id="tab-dashboard">
+
+                    <!-- 4 Notion Summary KPI Callout Cards -->
+                    <div class="kpi-grid">
+                        <div class="notion-kpi-card">
+                            <div class="kpi-top">
+                                <span class="kpi-emoji">💰</span>
+                                <span class="notion-tag tag-green">시트 실시간 동기화</span>
+                            </div>
+                            <div class="kpi-label">전체 통합 자산 (저축+만기)</div>
+                            <div class="kpi-value" id="kpi-total-networth">₩50,800,000</div>
+                            <div class="kpi-sub" id="kpi-sub-networth">특판예금(2,300만)·기쁨두배(140만)·카뱅(20만) 포함 총 ₩75,400,000</div>
+                        </div>
+
+                        <div class="notion-kpi-card">
+                            <div class="kpi-top">
+                                <span class="kpi-emoji">🐷</span>
+                                <span class="notion-tag tag-purple" id="stat-product-count">8개 적금상품</span>
+                            </div>
+                            <div class="kpi-label">총 누적 저축액 (시트 C3 기준)</div>
+                            <div class="kpi-value" id="kpi-accumulated-savings">₩4,300,000</div>
+                            <div class="kpi-sub" id="kpi-sub-savings">납입완료: <strong id="stat-paid-count">0회</strong> (<span id="overall-completion-rate">0%</span>)</div>
+                            <div class="mini-progress-track">
+                                <div class="mini-progress-fill" id="overall-progress-bar" style="width:0%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="notion-kpi-card">
+                            <div class="kpi-top">
+                                <span class="kpi-emoji">🏦</span>
+                                <span class="notion-tag tag-blue">확정 예금자산</span>
+                            </div>
+                            <div class="kpi-label">만기적금총액 (시트 D3 기준)</div>
+                            <div class="kpi-value" id="kpi-maturity-total">₩46,500,000</div>
+                            <div class="kpi-sub" id="kpi-sub-maturity">부산 1,000만 · 새마을 2,000만 · 도약 1,650만 (+특판예금 2,300만)</div>
+                        </div>
+
+                        <div class="notion-kpi-card">
+                            <div class="kpi-top">
+                                <span class="kpi-emoji">👶</span>
+                                <span class="notion-tag tag-yellow">아이급여 ₩200,000</span>
+                            </div>
+                            <div class="kpi-label">부모급여 총액 (시트 E3·F3 기준)</div>
+                            <div class="kpi-value" id="kpi-parental-total">₩19,000,000</div>
+                            <div class="kpi-sub" id="kpi-sub-parental">아이급여 누적 ₩200,000 · 부모급여 수령완료 ₩2,000,000</div>
+                        </div>
+                    </div>
+
+                    <!-- ================= DAILY SAVINGS HOT DEALS (오늘의 데일리 고금리 적금·특판 추천) ================= -->
+                    <section class="daily-deals-section" id="daily-deals-section">
+                        <div class="daily-deals-header">
+                            <div class="deals-title-group">
+                                <span class="deals-fire-icon">🔥</span>
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                        <h3 class="deals-title">오늘의 데일리 고금리 적금·예금 특가 & 이달의 추천</h3>
+                                        <span class="deals-live-badge"><span class="deals-dot"></span> 매일 자동갱신</span>
+                                    </div>
+                                    <p class="deals-sub" id="deals-date-display">오늘 기준 가장 혜택 좋은 금융 특판 (원클릭 가계부 즉시 등록 지원)</p>
+                                </div>
+                            </div>
+                            <div class="deals-header-actions">
+                                <div class="deals-filter-pills" id="deals-filter-pills">
+                                    <button class="deals-filter-pill active" onclick="filterDailyDeals('all')">전체 특가</button>
+                                    <button class="deals-filter-pill" onclick="filterDailyDeals('baby')">👶 출산·아동 (최고 10%)</button>
+                                    <button class="deals-filter-pill" onclick="filterDailyDeals('youth')">🧑 청년·도약 (최고 8%)</button>
+                                    <button class="deals-filter-pill" onclick="filterDailyDeals('parking')">🅿️ 파킹·목돈예금 (3.5%~)</button>
+                                </div>
+                                <button class="notion-btn notion-btn-default btn-xs" onclick="rotateDailyDeals()" title="다른 추천 특판 새로고침">
+                                    <i class="fa-solid fa-arrows-rotate"></i> 다른 특가 보기
+                                </button>
+                            </div>
+                        </div>
+                        <div class="daily-deals-carousel" id="daily-deals-container">
+                            <!-- Injected dynamically by app.js -->
+                        </div>
+                    </section>
+
+                    <!-- ================= NOTION DATABASE BLOCK: ✽ 가계부 (Exact Match to Uploaded Image) ================= -->
+                    <div class="notion-db-section">
+                        <!-- Cream Header Banner -->
+                        <div class="notion-section-banner">
+                            <span class="banner-asterisk">✽</span>
+                            <h2 class="banner-heading">가계부</h2>
+                            <span class="banner-sub-hint">웹에서 기입·체크하면 구글 스프레드시트에도 즉시 자동 반영됩니다</span>
+                        </div>
+
+                        <!-- Notion Database View Tabs & Filter Controls -->
+                        <div class="notion-db-toolbar">
+                            <div class="notion-db-views">
+                                <button class="db-view-tab active" data-view="all" onclick="switchNotionDbView('all')">
+                                    <i class="fa-regular fa-calendar-check"></i> 신규/전체
+                                </button>
+                                <button class="db-view-tab" data-view="this-month" onclick="switchNotionDbView('this-month')">
+                                    <i class="fa-regular fa-folder-open"></i> 이번달 내역
+                                </button>
+                                <button class="db-view-tab" data-view="savings" onclick="switchNotionDbView('savings')">
+                                    <i class="fa-solid fa-piggy-bank"></i> 저축/적금/청약
+                                </button>
+                                <button class="db-view-tab" data-view="expenses" onclick="switchNotionDbView('expenses')">
+                                    <i class="fa-solid fa-receipt"></i> 지출/병원·조리원
+                                </button>
+                                <button class="db-view-tab" data-view="unpaid" onclick="switchNotionDbView('unpaid')">
+                                    <i class="fa-regular fa-clock"></i> 미입금/예정
+                                </button>
+                            </div>
+
+                            <div class="notion-db-actions">
+                                <div class="notion-search-inline">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input type="text" id="notion-db-search" placeholder="내역, 계좌, 금액 검색..." oninput="renderNotionMainDatabase()">
+                                </div>
+                                <button class="notion-btn notion-btn-blue btn-xs" onclick="focusInlineAddRow()">
+                                    + 새 내역 기입
+                                </button>
+                                <button class="notion-btn notion-btn-default btn-xs" onclick="syncFullLedgerToGoogleSheets()" title="현재 표를 구글 시트의 새 탭으로 즉시 생성">
+                                    📊 시트 백업생성
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Notion Database Table -->
+                        <div class="notion-table-wrapper">
+                            <table class="notion-db-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-check"><input type="checkbox" disabled checked></th>
+                                        <th class="col-title"><i class="fa-solid fa-pen-fancy"></i> 기록해보아요</th>
+                                        <th class="col-date"><i class="fa-regular fa-calendar"></i> 결제일/청구일</th>
+                                        <th class="col-amount"><i class="fa-solid fa-money-bill-wave"></i> 금액</th>
+                                        <th class="col-subcat"><i class="fa-solid fa-arrow-up-right-dots"></i> 소분류</th>
+                                        <th class="col-maincat"><i class="fa-solid fa-magnifying-glass"></i> 대분류</th>
+                                        <th class="col-fixed"><i class="fa-solid fa-square-check"></i> 고정/완납</th>
+                                        <th class="col-owner"><i class="fa-solid fa-arrow-up-right-from-square"></i> 출금/명의자</th>
+                                        <th class="col-method"><i class="fa-regular fa-credit-card"></i> 거래수단</th>
+                                        <th class="col-action">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="notion-db-tbody">
+                                    <!-- Dynamic Notion Rows Injected Here -->
+                                </tbody>
+                                <!-- Inline Quick-Add Row (Like Notion "+ 새 페이지") -->
+                                <tfoot>
+                                    <tr class="notion-inline-add-row" id="inline-add-row">
+                                        <td class="col-check"><i class="fa-solid fa-plus" style="color:#9b9a97;"></i></td>
+                                        <td>
+                                            <input type="text" id="quick-add-title" class="notion-inline-input" placeholder="+ 새 내역 기입 (예: 9월 걸음마적금, 어린이집식판, 관리비)...">
+                                        </td>
+                                        <td>
+                                            <input type="text" id="quick-add-date" class="notion-inline-input" placeholder="2026/09/30" value="2026/08/25">
+                                        </td>
+                                        <td>
+                                            <input type="number" id="quick-add-amount" class="notion-inline-input" placeholder="금액(원)" step="1000">
+                                        </td>
+                                        <td>
+                                            <select id="quick-add-subcat" class="notion-inline-select">
+                                                <option value="🍼 예적금/청약/파킹">🍼 예적금/청약/파킹</option>
+                                                <option value="🏥 병원/조리원비">🏥 병원/조리원비</option>
+                                                <option value="🏠 관리비/생활비">🏠 관리비/생활비</option>
+                                                <option value="☎️ 통신/구독">☎️ 통신/구독</option>
+                                                <option value="💳 대출이자/보험">💳 대출이자/보험</option>
+                                                <option value="👶 육아/어린이집">👶 육아/어린이집</option>
+                                                <option value="🎁 정부지원금/수입">🎁 정부지원금/수입</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select id="quick-add-maincat" class="notion-inline-select">
+                                                <option value="저축/투자/연금">저축/투자/연금</option>
+                                                <option value="지출">지출</option>
+                                                <option value="수입/지원금">수입/지원금</option>
+                                            </select>
+                                        </td>
+                                        <td class="col-fixed" style="text-align:center;">
+                                            <input type="checkbox" id="quick-add-fixed" class="notion-checkbox" checked title="완납/고정 여부">
+                                        </td>
+                                        <td>
+                                            <select id="quick-add-owner" class="notion-inline-select">
+                                                <option value="주원">👶 주원</option>
+                                                <option value="지헌">👩 지헌</option>
+                                                <option value="준영">👨 준영</option>
+                                                <option value="토스 생활비">💧 토스 생활비</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" id="quick-add-method" class="notion-inline-input" placeholder="토스체크 / 새마을" value="토스체크">
+                                        </td>
+                                        <td>
+                                            <button type="button" class="notion-btn notion-btn-blue btn-xs" onclick="handleNotionQuickAdd()">
+                                                추가
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="notion-table-summary-row">
+                                        <td colspan="3" class="summary-label-cell">
+                                            <span id="notion-db-count-text">총 0건</span>
+                                        </td>
+                                        <td class="summary-sum-cell">
+                                            <span class="sum-prefix">합계</span> <strong id="notion-db-total-sum">₩0</strong>
+                                        </td>
+                                        <td colspan="6" class="summary-hint-cell">
+                                            <span>💡 체크박스를 누르면 입금완료/미입금 상태가 즉시 전환되며 구글 시트에 자동 저장됩니다.</span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ================= ACTIVE SAVINGS PRODUCTS GRID ================= -->
+                    <div class="notion-db-section">
+                        <div class="notion-section-banner">
+                            <span class="banner-asterisk">🏦</span>
+                            <h2 class="banner-heading">진행 중인 적금 · 예금 상품 카드</h2>
+                            <div style="margin-left:auto; display:flex; gap:0.4rem;">
+                                <button class="notion-btn notion-btn-default btn-xs" onclick="document.getElementById('new-product-modal').classList.add('active')">
+                                    + 적금 상품 추가
+                                </button>
+                                <button class="notion-btn notion-btn-blue btn-xs" onclick="populateProductSelect(); document.getElementById('deposit-modal').classList.add('active')">
+                                    + 회차 입금 등록
+                                </button>
+                            </div>
+                        </div>
+                        <div class="products-grid" id="products-container">
+                            <!-- Dynamic Product Cards -->
+                        </div>
+                    </div>
+
+                    <!-- ================= SPLIT ROW: MATURED ASSETS & RECOMMENDATIONS ================= -->
+                    <div class="notion-two-col-grid">
+                        <!-- Matured Deposits Card -->
+                        <div class="notion-card">
+                            <div class="notion-card-header">
+                                <h3>🏆 만기 적금 및 예금 보유 목록</h3>
+                                <span class="notion-tag tag-yellow">확정 예금 자산</span>
+                            </div>
+                            <div class="matured-list" id="matured-list"></div>
+                        </div>
+
+                        <!-- Baby & High-Yield Savings Recommendation Card -->
+                        <div class="notion-card">
+                            <div class="notion-card-header">
+                                <h3>👶 2026 출산특판 & 고금리 추천 적금</h3>
+                                <div style="display:flex; gap:0.3rem;">
+                                    <button class="notion-btn notion-btn-warm btn-xs active" id="rec-tab-baby" onclick="switchRecommendCategory('baby')">👶 아기특판</button>
+                                    <button class="notion-btn notion-btn-default btn-xs" id="rec-tab-high" onclick="switchRecommendCategory('high')">🔥 고금리</button>
+                                    <button class="notion-btn notion-btn-ghost btn-xs" id="btn-refresh-recommend" title="새로고침"><i class="fa-solid fa-arrows-rotate"></i></button>
+                                </div>
+                            </div>
+                            <div class="recommend-list" id="recommend-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- ================= COLLAPSIBLE ADVANCED INSIGHTS: CASHFLOW, ISA & AI GUARDIAN ================= -->
+                    <div class="notion-db-section">
+                        <div class="notion-section-banner">
+                            <span class="banner-asterisk">📊</span>
+                            <h2 class="banner-heading">월별 캐시플로우 예측 & 한투 ISA · AI 자산 진단</h2>
+                        </div>
+
+                        <!-- Monthly Cashflow Predictor -->
+                        <div class="notion-card" style="margin-bottom: 1rem;">
+                            <div class="notion-card-header" style="flex-wrap:wrap; gap:0.5rem;">
+                                <div>
+                                    <h3>📅 2026~2027 월별 수입 vs 저축 캐시플로우</h3>
+                                    <p style="font-size:0.78rem; color:var(--text-secondary); margin-top:2px;">정부 지원금 + 만기금 유입 대비 월 약정 저축액 흐름</p>
+                                </div>
+                                <div class="cashflow-month-selector" style="display:flex; gap:0.3rem; flex-wrap:wrap;">
+                                    <button class="notion-btn notion-btn-blue btn-xs" onclick="selectCashflowMonth('2026-08')" id="cf-m-2026-08">2026. 8월</button>
+                                    <button class="notion-btn notion-btn-default btn-xs" onclick="selectCashflowMonth('2026-09')" id="cf-m-2026-09">9월 (예금만기)</button>
+                                    <button class="notion-btn notion-btn-default btn-xs" onclick="selectCashflowMonth('2026-10')" id="cf-m-2026-10">10월</button>
+                                    <button class="notion-btn notion-btn-default btn-xs" onclick="selectCashflowMonth('2026-11')" id="cf-m-2026-11">11월</button>
+                                    <button class="notion-btn notion-btn-default btn-xs" onclick="selectCashflowMonth('2026-12')" id="cf-m-2026-12">12월</button>
+                                </div>
+                            </div>
+
+                            <div class="cashflow-metrics-grid">
+                                <div class="cf-metric-box cf-in">
+                                    <span class="cf-label">💚 예상 총수입 (Inflow)</span>
+                                    <h4 id="cf-inflow-val">₩1,100,000</h4>
+                                    <span id="cf-inflow-desc">부모급여 100만 + 아동수당 10만</span>
+                                </div>
+                                <div class="cf-metric-box cf-out">
+                                    <span class="cf-label">💙 예상 총저축 (Outflow)</span>
+                                    <h4 id="cf-outflow-val">₩2,000,000</h4>
+                                    <span id="cf-outflow-desc">약정 적금 상품 납입</span>
+                                </div>
+                                <div class="cf-metric-box cf-surplus">
+                                    <span class="cf-label">🧡 월 순수 잔여금 (Surplus)</span>
+                                    <h4 id="cf-surplus-val">-₩900,000</h4>
+                                    <span id="cf-surplus-desc">기타 주저축/생활비 차감</span>
+                                </div>
+                            </div>
+
+                            <div style="margin-top:0.85rem;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-secondary); margin-bottom:0.35rem;">
+                                    <span>수입 대비 저축 비중</span>
+                                    <strong id="cf-ratio-text">수입 35% vs 저축 65%</strong>
+                                </div>
+                                <div style="height:10px; background:#edece9; border-radius:999px; overflow:hidden; display:flex;">
+                                    <div id="cf-bar-inflow" style="width:35%; background:#2e7d32; transition:width 0.4s;"></div>
+                                    <div id="cf-bar-outflow" style="width:65%; background:#2383e2; transition:width 0.4s;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Guardian & Korea Investment ISA in a clean 2-col layout -->
+                        <div class="notion-two-col-grid">
+                            <div class="notion-card">
+                                <div class="notion-card-header">
+                                    <h3>🤖 AI 자산 진단 & 만기 최적화 리포트</h3>
+                                    <span class="notion-tag tag-purple">자동 분석</span>
+                                </div>
+                                <div id="ai-guardian-insights-container" class="ai-insights-list"></div>
+                            </div>
+
+                            <div class="notion-card">
+                                <div class="notion-card-header">
+                                    <h3>🏛️ 한국투자증권 중개형 ISA (월 10만원 플랜)</h3>
+                                    <a href="https://search.naver.com/search.naver?query=한국투자증권+중개형+ISA+적립식" target="_blank" rel="noopener noreferrer" class="notion-btn notion-btn-default btn-xs">한투 ISA 조회 ↗</a>
+                                </div>
+                                <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+                                    비과세 200만원 한도 100% 면제 + 주원 아기 미래 학자금 3분할 ETF 적립 플랜
+                                </p>
+                                <table class="notion-db-table compact-table">
+                                    <thead>
+                                        <tr><th>추천 ETF</th><th>월 매수액</th><th>비중</th><th>투자 목적</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>ACE/TIGER 미국S&P500</strong></td>
+                                            <td><strong>₩50,000</strong></td>
+                                            <td><span class="notion-tag tag-blue">50%</span></td>
+                                            <td>미국 우량 500대 기업 장기 성장</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>SOL 미국배당다우존스(SCHD)</strong></td>
+                                            <td><strong>₩30,000</strong></td>
+                                            <td><span class="notion-tag tag-green">30%</span></td>
+                                            <td>배당 성장 & 복리 재투자</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>TIGER 미국배당+3%프리미엄</strong></td>
+                                            <td><strong>₩20,000</strong></td>
+                                            <td><span class="notion-tag tag-yellow">20%</span></td>
+                                            <td>매월 15일 월배당 현금흐름</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= TAB 2: SAVINGS LEDGER (적금/저축 누적장부) ================= -->
+                <section class="tab-page" id="tab-savings-ledger">
+                    <div class="notion-section-banner">
+                        <span class="banner-asterisk">🗂️</span>
+                        <h2 class="banner-heading">적금/저축 통합 입금 장부 (25~26년)</h2>
+                        <div style="margin-left:auto; display:flex; gap:0.4rem;">
+                            <button class="notion-btn notion-btn-blue btn-xs" onclick="populateProductSelect(); document.getElementById('deposit-modal').classList.add('active')">
+                                + 신규 입금 내역 등록
+                            </button>
+                            <button class="notion-btn notion-btn-warm btn-xs" onclick="syncFullLedgerToGoogleSheets()">
+                                📊 구글 시트 새 탭으로 백업 생성
+                            </button>
+                            <button class="notion-btn notion-btn-default btn-xs" id="btn-export-excel">
+                                📥 엑셀(CSV) 다운로드
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="notion-card" style="margin-bottom:1rem;">
+                        <div class="search-inputs-grid">
+                            <div class="input-group">
+                                <label><i class="fa-solid fa-magnifying-glass"></i> 검색어 (적금명, 은행명, 월, 날짜)</label>
+                                <input type="text" id="ledger-search-input" placeholder="예: 걸음마, 하나은행, 8월...">
+                            </div>
+                            <div class="input-group">
+                                <label><i class="fa-solid fa-filter"></i> 납입 상태 필터</label>
+                                <select id="ledger-status-select">
+                                    <option value="all">전체 상태 보기</option>
+                                    <option value="deposited">입금 완료 (완납)</option>
+                                    <option value="unpaid">미입금</option>
+                                    <option value="scheduled">납입 예정</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notion-table-wrapper">
+                        <table class="notion-db-table master-table">
+                            <thead>
+                                <tr>
+                                    <th>NO</th>
+                                    <th>적금/저축 상품명</th>
+                                    <th>월(Month)</th>
+                                    <th>입금일자</th>
+                                    <th>금액</th>
+                                    <th>납입상태</th>
+                                    <th>관리액션</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-table-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= TAB 3: MATURITY & SAVINGS MASTER ================= -->
+                <section class="tab-page" id="tab-maturity-master">
+                    <div class="notion-section-banner">
+                        <span class="banner-asterisk">💳</span>
+                        <h2 class="banner-heading">적금 마스터 & 소유자(주원/지헌/준영) 현황</h2>
+                        <div style="margin-left:auto;">
+                            <button class="notion-btn notion-btn-blue btn-xs" onclick="document.getElementById('new-product-modal').classList.add('active')">
+                                + 신규 적금 상품 추가
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="notion-table-wrapper" style="margin-bottom:2rem;">
+                        <table class="notion-db-table master-table">
+                            <thead>
+                                <tr>
+                                    <th>NO</th>
+                                    <th>적금/예금 상품명</th>
+                                    <th>소유자 (명의)</th>
+                                    <th>약정 이율</th>
+                                    <th>매달 입금액</th>
+                                    <th>총 금액 (현재 누적)</th>
+                                    <th>예상 세후 이자</th>
+                                    <th>시작일</th>
+                                    <th>만기일</th>
+                                    <th style="text-align:center;">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="savings-master-table-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="notion-section-banner">
+                        <span class="banner-asterisk">🏆</span>
+                        <h2 class="banner-heading">만기 적금 & 예금 확정 자산 목록</h2>
+                        <div style="margin-left:auto;">
+                            <button class="notion-btn notion-btn-default btn-xs" id="btn-export-maturity-excel">
+                                📥 만기자산 엑셀 다운로드
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="notion-table-wrapper">
+                        <table class="notion-db-table master-table">
+                            <thead>
+                                <tr>
+                                    <th>NO</th>
+                                    <th>만기 구분 / 종류</th>
+                                    <th>보유 은행</th>
+                                    <th>확정 만기 금액</th>
+                                    <th>자산 구분</th>
+                                </tr>
+                            </thead>
+                            <tbody id="maturity-table-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= TAB 4: HOSPITAL & POSTPARTUM EXPENSES ================= -->
+                <section class="tab-page" id="tab-hospital-expenses">
+                    <div class="notion-section-banner">
+                        <span class="banner-asterisk">🏥</span>
+                        <h2 class="banner-heading">조리원 & 병원비 지출 상세 내역 (보건소 환불 트래커)</h2>
+                        <div style="margin-left:auto; display:flex; gap:0.4rem;">
+                            <button class="notion-btn notion-btn-blue btn-xs" onclick="openHospitalExpenseModal()">
+                                + 병원/조리원 지출 추가
+                            </button>
+                            <button class="notion-btn notion-btn-default btn-xs" id="btn-export-hosp-excel">
+                                📥 엑셀 다운로드
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="kpi-grid" style="margin-bottom:1.25rem;">
+                        <div class="notion-kpi-card">
+                            <div class="kpi-label">🧾 총 지출 누적액</div>
+                            <div class="kpi-value" id="hosp-kpi-total" style="color:#d9534f;">₩4,256,900</div>
+                            <div class="kpi-sub">병원 + 조리원 + 산후도우미</div>
+                        </div>
+                        <div class="notion-kpi-card">
+                            <div class="kpi-label">👩‍⚕️ 산후도우미 지출액</div>
+                            <div class="kpi-value" id="hosp-kpi-postpartum" style="color:#2e7d32;">₩470,000</div>
+                            <div class="kpi-sub">정부 지원 및 본인부담금</div>
+                        </div>
+                        <div class="notion-kpi-card">
+                            <div class="kpi-label">🏥 병원비 지출액</div>
+                            <div class="kpi-value" id="hosp-kpi-hospital" style="color:#2383e2;">₩1,286,900</div>
+                            <div class="kpi-sub">진료비, 입원비, 영양제</div>
+                        </div>
+                        <div class="notion-kpi-card">
+                            <div class="kpi-label">🍼 조리원비 지출액</div>
+                            <div class="kpi-value" id="hosp-kpi-carecenter" style="color:#6940a5;">₩2,500,000</div>
+                            <div class="kpi-sub">산후조리원 예약 및 이용료</div>
+                        </div>
+                    </div>
+
+                    <div class="notion-card" style="margin-bottom:1rem;">
+                        <div class="search-inputs-grid">
+                            <div class="input-group">
+                                <label><i class="fa-solid fa-magnifying-glass"></i> 결제수단 / 카테고리 / 비고 검색</label>
+                                <input type="text" id="hosp-search-input" placeholder="예: 롯데, 보건소, 조리원...">
+                            </div>
+                            <div class="input-group">
+                                <label><i class="fa-solid fa-filter"></i> 카테고리 필터</label>
+                                <select id="hosp-cat-select">
+                                    <option value="all">전체 카테고리 보기</option>
+                                    <option value="산후도우미">산후도우미</option>
+                                    <option value="병원비">병원비</option>
+                                    <option value="조리원비">조리원비</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notion-table-wrapper">
+                        <table class="notion-db-table master-table">
+                            <thead>
+                                <tr>
+                                    <th>NO</th>
+                                    <th>결제 날짜</th>
+                                    <th>카테고리</th>
+                                    <th>결제수단 / 세부내용</th>
+                                    <th>지출 금액</th>
+                                    <th>비고 (보건소 환불 상태 클릭 전환)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hospital-table-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= TAB 5: BABY MILESTONES & ALLOWANCES ================= -->
+                <section class="tab-page" id="tab-baby-milestones">
+                    <div class="notion-section-banner">
+                        <span class="banner-asterisk">👶</span>
+                        <h2 class="banner-heading">주원 아기 생애주기 목표 & 정부 육아지원금 캘린더</h2>
+                        <span class="notion-tag tag-green" style="margin-left:auto;">총 수령 예정액: ₩19,000,000+</span>
+                    </div>
+
+                    <div class="notion-card" style="margin-bottom:1.25rem;">
+                        <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1rem;">
+                            🎂 <strong>주원 아기 출생일: 2026년 7월 18일</strong> | 매월 25일 입금되는 부모급여·아동수당 및 아기 미래 자산 목표 달성률입니다.
+                        </p>
+                        <div class="kpi-grid">
+                            <div class="notion-kpi-card">
+                                <div class="kpi-label">🎂 Milestone 1: 돌잔치 & 백일 기금</div>
+                                <div class="kpi-value" style="font-size:1.2rem;">₩4,200,000 <span style="font-size:0.85rem; color:var(--text-secondary);">/ ₩5,000,000 (84%)</span></div>
+                                <div class="mini-progress-track"><div class="mini-progress-fill" style="width:84%; background:#2e7d32;"></div></div>
+                            </div>
+                            <div class="notion-kpi-card">
+                                <div class="kpi-label">🎁 Milestone 2: 10년 비과세 증여한도</div>
+                                <div class="kpi-value" style="font-size:1.2rem;">₩300,000 <span style="font-size:0.85rem; color:var(--text-secondary);">/ ₩20,000,000 (1.5%)</span></div>
+                                <div class="mini-progress-track"><div class="mini-progress-fill" style="width:4%; background:#2383e2;"></div></div>
+                            </div>
+                            <div class="notion-kpi-card">
+                                <div class="kpi-label">🎒 Milestone 3: 유치원/학자금 펀드</div>
+                                <div class="kpi-value" style="font-size:1.2rem;">₩1,200,000 <span style="font-size:0.85rem; color:var(--text-secondary);">/ ₩10,000,000 (12%)</span></div>
+                                <div class="mini-progress-track"><div class="mini-progress-fill" style="width:12%; background:#d97706;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="notion-table-wrapper">
+                        <table class="notion-db-table master-table">
+                            <thead>
+                                <tr><th>연령 구분</th><th>지급 기간</th><th>부모급여</th><th>아동수당</th><th>월 총 지급액</th><th>상태</th></tr>
+                            </thead>
+                            <tbody id="baby-allowance-table-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ================= TAB 6: GSHEET & FIREBASE SETTINGS ================= -->
+                <section class="tab-page" id="tab-gsheet-settings">
+                    <div class="notion-section-banner">
+                        <span class="banner-asterisk">⚙️</span>
+                        <h2 class="banner-heading">구글 스프레드시트 & 클라우드 DB 양방향 연동 설정</h2>
+                    </div>
+
+                    <!-- Admin Approval Panel -->
+                    <div class="notion-card" id="admin-approval-panel" style="display:none; margin-bottom:1.25rem;">
+                        <div class="notion-card-header">
+                            <h3>👑 주관리자 회원가입 승인 센터</h3>
+                            <span class="notion-tag tag-blue">rkstmtk@gmail.com 전용</span>
+                        </div>
+                        <div class="notion-table-wrapper">
+                            <table class="notion-db-table master-table">
+                                <thead>
+                                    <tr><th>신청자 성명</th><th>지메일 계정</th><th>신청일시</th><th>승인 상태</th><th>관리 조치</th></tr>
+                                </thead>
+                                <tbody id="admin-user-list-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 1. Google Sheets WebApp URL Config -->
+                    <div class="notion-card" style="margin-bottom:1.25rem;">
+                        <div class="notion-card-header">
+                            <h3>🔗 1단계: 구글 Apps Script 웹앱 URL 연결</h3>
+                            <span class="notion-tag tag-green">실시간 양방향 저장</span>
+                        </div>
+                        <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:0.85rem;">
+                            웹에서 추가·수정한 내역이 구글 스프레드시트에 자동으로 기입되고 새 시트가 생성되도록 웹앱 URL을 연결합니다.
+                        </p>
+                        <div class="url-input-row">
+                            <input type="text" id="webapp-url-input" class="url-text-input" 
+                                   value="https://script.google.com/macros/s/AKfycbzv46eUI_Y-DoICIGb6fLZa5FaWamZbByCt0tqvDfWzIw6bAvWE-wCrWZ2j4GdPBwbJvA/exec"
+                                   placeholder="https://script.google.com/macros/s/.../exec">
+                            <button class="notion-btn notion-btn-blue" id="btn-save-url">
+                                <i class="fa-solid fa-link"></i> 연동 URL 저장
+                            </button>
+                            <button class="notion-btn notion-btn-default" id="btn-clear-url">
+                                <i class="fa-solid fa-xmark"></i> URL 초기화
+                            </button>
+                        </div>
+                        <div class="notion-callout-tip" style="margin-top:0.85rem;">
+                            💡 <strong>구글 시트에 자동 기입/새 시트 생성을 활성화하려면?</strong> 아래 <strong>2단계 매크로 코드(V3.0)</strong>를 복사하여 구글 시트의 <code>[확장 프로그램] &gt; [Apps Script]</code>에 붙여넣고 <strong>[새 배포] (모든 사용자 권한)</strong>를 완료한 뒤 URL을 위 칸에 저장해 주세요!
+                        </div>
+                    </div>
+
+                    <!-- 2. Apps Script Code v4.0 (Supports Auto Row Append, Cell Update & New Sheet Creation!) -->
+                    <div class="notion-card" style="margin-bottom:1.25rem;">
+                        <div class="notion-card-header">
+                            <h3>📜 2단계: 구글 스프레드시트(량신) 양방향 자동화 매크로 (Apps Script V4.5 무결점판)</h3>
+                            <button class="notion-btn notion-btn-blue btn-xs" id="btn-copy-code">
+                                <i class="fa-solid fa-copy"></i> 매크로 코드 복사
+                            </button>
+                        </div>
+                        <p style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+                            이 코드는 <strong>량신</strong> 스프레드시트의 <strong>① 월별 적금 시트(gid=661362148) 해당 월 칸 자동 기입 &amp; 총액 갱신, ② 적금리스트(gid=7284588) 총금액 자동 갱신, ③ 새로운 시트(탭) 자동 생성</strong>을 모두 완벽하게 처리합니다.
+                        </p>
+                        <div class="code-viewer-container">
+                            <div class="code-header">
+                                <span class="code-filename">Code.gs (구글 시트 [확장 프로그램] &gt; [Apps Script]에 덮어쓰기 후 [배포 관리] &gt; [새 버전] 배포)</span>
+                            </div>
+                            <pre class="code-block"><code id="code-content">/**
+ * 📒 매일가계부 &amp; 주원 가족 자산 통합 Google Apps Script (V5.0 — 단방향 자동저장 &amp; 상품/내역 삭제 지원 완결판)
+ * - 스프레드시트 고유 ID: 16xlN-rZwRRsOhdylZGZZL1-FF3flTthARoE6Tr4Xwrg (량신)
+ * - 웹(ju-mu-five.vercel.app)에서 기입·수정·삭제한 모든 내역이 구글 시트에 100% 자동 저장됩니다.
+ * - 적금 상품 삭제(delete_product), 가계부 내역 삭제(delete_record), 병원비 삭제 완벽 대응.
+ */
+
+var SPREADSHEET_ID = '16xlN-rZwRRsOhdylZGZZL1-FF3flTthARoE6Tr4Xwrg';
+
+/**
+ * ✅ 테스트 실행 함수 (Apps Script 편집기에서 [실행] 클릭 시 오류 없이 즉시 점검)
+ */
+function testConnection() {
+  var ss = getSS();
+  if (!ss) {
+    Logger.log("❌ 스프레드시트를 열 수 없습니다. 시트 ID를 확인해주세요.");
+    return "FAIL";
+  }
+  Logger.log("✅ 스프레드시트 정상 연결 완료: [" + ss.getName() + "]");
+  var gridSheet = getSheetByGid(ss, 661362148, 1);
+  var masterSheet = getSheetByGid(ss, 7284588, 0);
+  Logger.log("  • 월별 시트: " + (gridSheet ? gridSheet.getName() : "없음"));
+  Logger.log("  • 적금리스트: " + (masterSheet ? masterSheet.getName() : "없음"));
+  return "SUCCESS";
+}
+
+function getSS() {
+  try {
+    var active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+  } catch(e) {}
+  try {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch(e2) {
+    return null;
+  }
+}
+
+function getSheetByGid(ss, gid, fallbackIdx) {
+  if (!ss) ss = getSS();
+  if (!ss) return null;
+  try {
+    var sheets = ss.getSheets();
+    if (!sheets || sheets.length === 0) return null;
+    for (var i = 0; i &lt; sheets.length; i++) {
+      if (sheets[i].getSheetId() == gid) return sheets[i];
+    }
+    return sheets[fallbackIdx || 0] || sheets[0];
+  } catch (err) {
+    return null;
+  }
+}
+
+function cleanProdKey(str) {
+  if (!str) return '';
+  return str.toString().split('(')[0].replace(/\s+/g, '').trim();
+}
+
+function doGet(e) {
+  var ss = getSS();
+  var gridSheet = getSheetByGid(ss, 661362148, 1);
+  var masterSheet = getSheetByGid(ss, 7284588, 0);
+  var memoSheet = ss ? ss.getSheetByName('일정메모') : null;
+  var webLedgerSheet = ss ? ss.getSheetByName('매일가계부_웹입력') : null;
+
+  return ContentService.createTextOutput(JSON.stringify({
+    version: "5.0",
+    status: "ok",
+    sheetName: ss ? ss.getName() : "미연결",
+    grid: gridSheet ? gridSheet.getDataRange().getDisplayValues() : [],
+    master: masterSheet ? masterSheet.getDataRange().getDisplayValues() : [],
+    memos: memoSheet ? memoSheet.getDataRange().getDisplayValues() : [],
+    webLedger: webLedgerSheet ? webLedgerSheet.getDataRange().getDisplayValues() : []
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var ss = getSS();
+    if (!ss) {
+      return jsonResponse({ status: 'error', message: '스프레드시트를 열 수 없습니다.' });
+    }
+    var params = {};
+    if (e &amp;&amp; e.postData &amp;&amp; e.postData.contents) {
+      try {
+        params = JSON.parse(e.postData.contents);
+      } catch(pErr) {
+        params = e.parameter || {};
+      }
+    } else if (e &amp;&amp; e.parameter) {
+      params = e.parameter;
+    }
+
+    var act = params.subAction || params.action || 'deposit';
+    var nowStr = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+    // 1. [신규 기능] 적금 상품 삭제 요청 (delete_product)
+    if (act === 'delete_product') {
+      var prodToDelete = cleanProdKey(params.productName || params.name || '');
+      var masterSheet = getSheetByGid(ss, 7284588, 0);
+      var deletedCount = 0;
+      if (masterSheet &amp;&amp; prodToDelete) {
+        var mGrid = masterSheet.getDataRange().getDisplayValues();
+        for (var mr = mGrid.length - 1; mr &gt;= 0; mr--) {
+          var rowName = cleanProdKey(mGrid[mr][3] || mGrid[mr][2] || '');
+          if (rowName &amp;&amp; (rowName.indexOf(prodToDelete) !== -1 || prodToDelete.indexOf(rowName) !== -1)) {
+            masterSheet.deleteRow(mr + 1);
+            deletedCount++;
+          }
+        }
+      }
+      var ledgerSheet = ss.getSheetByName('매일가계부_웹입력');
+      if (ledgerSheet) {
+        ledgerSheet.appendRow(['[상품삭제] ' + (params.productName || params.name), '-', '-', 0, '적금상품삭제', '삭제', '삭제완료', '웹동기화', '관리자 삭제', nowStr]);
+      }
+      return jsonResponse({ status: 'success', version: '5.0', deleted: prodToDelete, deletedCount: deletedCount });
+    }
+
+    // 2. [신규 기능] 가계부 특정 내역 삭제 / 취소 (delete_record)
+    if (act === 'delete_record') {
+      var rec = params.record || params;
+      var prodName = rec.productName || params.productName || '';
+      var monthStr = (rec.month || params.month || '').toString().trim();
+      var prodKey = cleanProdKey(prodName);
+
+      var gridSheet = getSheetByGid(ss, 661362148, 1);
+      if (gridSheet &amp;&amp; prodKey &amp;&amp; monthStr) {
+        var grid = gridSheet.getDataRange().getDisplayValues();
+        for (var r = 0; r &lt; grid.length - 1; r++) {
+          var subRow = grid[r + 1] || [];
+          for (var sc = 0; sc &lt; subRow.length; sc++) {
+            if ((subRow[sc] || '').toString().trim() === '월') {
+              var headerCandidate = ((grid[r][sc] || '') + ' ' + (grid[r][sc + 1] || '')).trim();
+              var headerKey = cleanProdKey(headerCandidate);
+              if (headerKey &amp;&amp; (headerKey.indexOf(prodKey) !== -1 || prodKey.indexOf(headerKey) !== -1)) {
+                for (var mr = r + 2; mr &lt; grid.length; mr++) {
+                  var mVal = (grid[mr][sc] || '').toString().trim();
+                  if (mVal === '총액' || mVal === '총급여' || mVal === '월') break;
+                  if (mVal === monthStr) {
+                    gridSheet.getRange(mr + 1, sc + 2).setValue('');
+                    gridSheet.getRange(mr + 1, sc + 3).setValue('');
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return jsonResponse({ status: 'success', version: '5.0', message: '내역 삭제 완료' });
+    }
+
+    // 3. 병원비 항목 삭제 (delete_hospital_expense)
+    if (act === 'delete_hospital_expense') {
+      var hospSheet = getSheetByGid(ss, 1541600042, 2);
+      if (hospSheet &amp;&amp; params.details) {
+        var hGrid = hospSheet.getDataRange().getDisplayValues();
+        var targetDet = params.details.toString().trim();
+        for (var hr = hGrid.length - 1; hr &gt;= 0; hr--) {
+          if ((hGrid[hr][3] || '').toString().trim() === targetDet) {
+            hospSheet.deleteRow(hr + 1);
+            break;
+          }
+        }
+      }
+      return jsonResponse({ status: 'success', version: '5.0' });
+    }
+
+    // 4. 새로운 시트(탭) 생성 요청 처리
+    if (act === 'create_new_sheet' || act === 'create_edit_history_sheet') {
+      var targetName = (params.sheetName || ('매일가계부_' + Utilities.formatDate(new Date(), "Asia/Seoul", "yyyyMMdd_HHmm"))).toString().trim();
+      var newSheet = ss.getSheetByName(targetName);
+      if (!newSheet) {
+        newSheet = ss.insertSheet(targetName);
+      } else {
+        newSheet.clear();
+      }
+      var headers = ['NO', '기록내역(상품명)', '결제일/입금일', '금액', '소분류', '대분류', '상태', '명의자/출금계좌', '거래수단/비고', '동기화일시'];
+      newSheet.appendRow(headers);
+      newSheet.getRange(1, 1, 1, headers.length).setBackground('#fbf3db').setFontWeight('bold');
+
+      var rows = params.records || [];
+      for (var i = 0; i &lt; rows.length; i++) {
+        var r = rows[i];
+        newSheet.appendRow([
+          i + 1,
+          r.title || r.productName || '',
+          r.date || '',
+          Number(r.amount) || 0,
+          r.subCategory || r.month || '',
+          r.mainCategory || '저축/투자',
+          r.status || '입금완료',
+          r.owner || '가족공용',
+          r.method || r.memo || '',
+          nowStr
+        ]);
+      }
+      if (rows.length &gt; 0) {
+        newSheet.appendRow(['', '합계', '', '=SUM(D2:D' + (rows.length + 1) + ')', '', '', '', '', '', '']);
+      }
+      return jsonResponse({ status: 'success', version: '5.0', sheetName: targetName, rowCount: rows.length });
+    }
+
+    // 5. 적금 입금 / 내역 수정 / 웹 가계부 기입 처리
+    if (act === 'deposit' || act === 'update_record' || act === 'add_ledger_entry') {
+      var rec = params.record || params;
+      var prodName = rec.productName || params.productName || rec.title || '';
+      var monthStr = (rec.month || params.month || '').toString().trim();
+      var dateStr = (rec.date || params.date || '').toString().trim();
+      var amountNum = Number(rec.amount !== undefined ? rec.amount : params.amount) || 0;
+      var statusStr = rec.status || params.status || 'deposited';
+      var prodKey = cleanProdKey(prodName);
+
+      // (A) 월별 적금 통합 리스트 시트(gid=661362148)에서 해당 상품 &amp; 월 셀 찾아 직접 기입
+      var gridSheet = getSheetByGid(ss, 661362148, 1);
+      var grid = gridSheet ? gridSheet.getDataRange().getDisplayValues() : [];
+      var updatedBlockSum = -1;
+
+      if (gridSheet &amp;&amp; prodKey &amp;&amp; monthStr) {
+        for (var r = 0; r &lt; grid.length - 1; r++) {
+          var subRow = grid[r + 1] || [];
+          for (var sc = 0; sc &lt; subRow.length; sc++) {
+            if ((subRow[sc] || '').toString().trim() === '월') {
+              var headerCandidate = ((grid[r][sc] || '') + ' ' + (grid[r][sc + 1] || '')).trim();
+              var headerKey = cleanProdKey(headerCandidate);
+              if (headerKey &amp;&amp; (headerKey.indexOf(prodKey) !== -1 || prodKey.indexOf(headerKey) !== -1)) {
+                var runningSum = 0;
+                for (var mr = r + 2; mr &lt; grid.length; mr++) {
+                  var mVal = (grid[mr][sc] || '').toString().trim();
+                  if (mVal === '총액' || mVal === '총급여' || mVal === '월') {
+                    if (mVal === '총액' || mVal === '총급여') {
+                      var totalCell = gridSheet.getRange(mr + 1, sc + 3);
+                      if (!totalCell.getFormula()) totalCell.setValue(runningSum);
+                      updatedBlockSum = runningSum;
+                    }
+                    break;
+                  }
+                  if (mVal === monthStr) {
+                    if (statusStr === 'unpaid') {
+                      gridSheet.getRange(mr + 1, sc + 2).setValue('');
+                      gridSheet.getRange(mr + 1, sc + 3).setValue('');
+                    } else {
+                      gridSheet.getRange(mr + 1, sc + 2).setValue(dateStr);
+                      gridSheet.getRange(mr + 1, sc + 3).setValue(amountNum);
+                      runningSum += amountNum;
+                    }
+                  } else {
+                    var existingDate = (grid[mr][sc + 1] || '').toString().trim();
+                    var existingAmt = Number((grid[mr][sc + 2] || '').toString().replace(/[^0-9.-]+/g, '')) || 0;
+                    if (existingDate &amp;&amp; existingDate !== '미입금' &amp;&amp; existingAmt &gt; 0) {
+                      runningSum += existingAmt;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // (B) 적금리스트 시트(gid=7284588)의 총금액(I열)도 함께 갱신
+      if (prodKey &amp;&amp; updatedBlockSum &gt;= 0) {
+        var masterSheet = getSheetByGid(ss, 7284588, 0);
+        if (masterSheet) {
+          var mGrid = masterSheet.getDataRange().getDisplayValues();
+          for (var mr2 = 0; mr2 &lt; mGrid.length; mr2++) {
+            var mName = cleanProdKey(mGrid[mr2][3] || mGrid[mr2][2] || '');
+            if (mName &amp;&amp; (mName.indexOf(prodKey) !== -1 || prodKey.indexOf(mName) !== -1)) {
+              var mTotalCell = masterSheet.getRange(mr2 + 1, 9); // Col I (총금액)
+              if (!mTotalCell.getFormula()) mTotalCell.setValue(updatedBlockSum);
+              break;
+            }
+          }
+        }
+      }
+
+      // (C) [매일가계부_웹입력] 시트에 모든 웹 입력 이력 누적 기록
+      var ledgerSheet = ss.getSheetByName('매일가계부_웹입력');
+      if (!ledgerSheet) {
+        ledgerSheet = ss.insertSheet('매일가계부_웹입력');
+        ledgerSheet.appendRow(['기록내역(상품명)', '월/회차', '결제/입금일자', '금액', '소분류', '대분류', '상태', '명의자/계좌', '거래수단/비고', '등록일시']);
+        ledgerSheet.getRange(1, 1, 1, 10).setBackground('#fbf3db').setFontWeight('bold');
+      }
+      ledgerSheet.appendRow([
+        prodName, monthStr, dateStr, amountNum,
+        rec.subCategory || '예적금/가계부',
+        rec.mainCategory || '저축/지출',
+        statusStr,
+        rec.owner || '가족공용',
+        rec.method || rec.memo || '웹 대시보드 기입',
+        nowStr
+      ]);
+
+      return jsonResponse({ status: 'success', version: '5.0', updatedBlockSum: updatedBlockSum });
+    }
+
+    // 6. 신규 적금 상품 등록 시 [적금리스트](gid=7284588)에 자동 행 추가
+    if (act === 'new_product') {
+      var listSheet = getSheetByGid(ss, 7284588, 0);
+      if (listSheet) {
+        var isJuwon = params.owner === '주원' ? 'O' : 'X';
+        var isJihyeon = params.owner === '지헌' ? 'O' : 'X';
+        var isJunyeong = params.owner === '준영' ? 'O' : 'X';
+        listSheet.appendRow(['', '', '', params.name, isJuwon, isJihyeon, isJunyeong, Number(params.monthly) || 0, Number(params.initial) || 0, params.startDate || '-', params.endDate || '-']);
+      }
+      return jsonResponse({ status: 'success', version: '5.0' });
+    }
+
+    // 7. 병원비/조리원비 지출 추가 시 (gid=1541600042) 자동 행 추가
+    if (act === 'add_hospital_expense') {
+      var hospSheet = getSheetByGid(ss, 1541600042, 2);
+      if (hospSheet) {
+        hospSheet.appendRow(['', params.date, params.category, params.details, Number(params.amount) || 0, params.note || '-']);
+      }
+      return jsonResponse({ status: 'success', version: '5.0' });
+    }
+
+    // 8. 일정/메모 저장
+    if (params.date &amp;&amp; params.content) {
+      var memoSheet = ss.getSheetByName('일정메모');
+      if (!memoSheet) {
+        memoSheet = ss.insertSheet('일정메모');
+        memoSheet.appendRow(['날짜', '시간', '카테고리', '내용', '등록일시']);
+      }
+      memoSheet.appendRow([params.date, params.time || '', params.category || '메모', params.content, nowStr]);
+    }
+    return jsonResponse({ status: 'success', version: '5.0' });
+
+  } catch (err) {
+    return jsonResponse({ status: 'error', message: err.message });
+  }
+}
+
+function jsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- 3. Firebase Cloud DB Config -->
+                    <div class="notion-card">
+                        <div class="notion-card-header">
+                            <h3>🔥 3단계: Firebase 클라우드 실시간 DB 설정 (프로젝트: nocaptialyouth)</h3>
+                            <span class="notion-tag tag-yellow">0초 실시간 백업</span>
+                        </div>
+                        <div class="search-inputs-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:0.85rem;">
+                            <div class="input-group">
+                                <label>apiKey</label>
+                                <input type="text" id="fb-api-key" value="AIzaSyDZLZT8OAcgV0UTC3FBtFfNsrWp_0YsbAk">
+                            </div>
+                            <div class="input-group">
+                                <label>projectId</label>
+                                <input type="text" id="fb-project-id" value="nocaptialyouth">
+                            </div>
+                            <div class="input-group">
+                                <label>authDomain</label>
+                                <input type="text" id="fb-auth-domain" value="nocaptialyouth.firebaseapp.com">
+                            </div>
+                            <div class="input-group">
+                                <label>appId</label>
+                                <input type="text" id="fb-app-id" value="1:789489809787:web:fd1df94f9aae22281965de">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="notion-btn notion-btn-blue" id="btn-save-firebase">
+                                <i class="fa-solid fa-bolt"></i> Firebase 연동 저장
+                            </button>
+                            <button class="notion-btn notion-btn-default" id="btn-clear-firebase">
+                                연동 해제
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= MODALS (ALL STYLED IN CLEAN NOTION THEME) ================= -->
+
+    <!-- 1. Deposit / Ledger Entry Modal -->
+    <div class="modal-overlay" id="deposit-modal">
+        <div class="modal-content notion-modal">
+            <div class="modal-header">
+                <h3>✏️ 가계부 / 적금 입금 내역 기입</h3>
+                <button class="btn-close" id="deposit-modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="deposit-form" class="modal-form">
+                <div class="input-group">
+                    <label>적금/저축 상품 선택 (또는 직접 입력)</label>
+                    <select id="modal-product-select" required></select>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>납입 월 / 회차</label>
+                        <input type="text" id="modal-month-input" placeholder="예: 8월, 9월" value="8월" required>
+                    </div>
+                    <div class="input-group">
+                        <label>결제일 / 입금날짜</label>
+                        <input type="text" id="modal-date-input" placeholder="예: 2026. 8. 25" value="2026. 8. 25" required>
+                    </div>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>금액 (원)</label>
+                        <input type="number" id="modal-amount-input" placeholder="예: 300000" required>
+                    </div>
+                    <div class="input-group">
+                        <label>거래수단 / 은행</label>
+                        <input type="text" id="modal-method-input" placeholder="예: 토스체크, 자동이체" value="자동이체">
+                    </div>
+                </div>
+                <div class="notion-callout-tip">
+                    ✨ <strong>구글 시트 자동 연동:</strong> 등록 즉시 대시보드 합계와 구글 스프레드시트에 금액이 자동 추가됩니다.
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="notion-btn notion-btn-default" id="btn-deposit-cancel">취소</button>
+                    <button type="submit" class="notion-btn notion-btn-blue">등록 및 시트 자동 반영</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </header>
 
-  <main>
-    <section class="stats" aria-label="수록 기관 요약">
-      <article><strong id="totalStat">14</strong><span>전체 기관</span></article>
-      <article><strong id="confirmedStat">14</strong><span>재활의학과 확인</span></article>
-      <article><strong id="districtStat">2</strong><span>행정 구역</span></article>
-      <article><strong id="recoveryStat">1</strong><span>회복기 지정 병원</span></article>
-    </section>
-
-    <!-- 구글 애드센스 연동 광고 컨테이너 (상단 배너) -->
-    <div class="adsense-banner-container" style="max-width: 1180px; margin: 25px auto 5px; width: min(1180px, calc(100% - 40px)); text-align: center;">
-      <div style="background: var(--white); border: 1px dashed var(--line); border-radius: var(--radius); padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100px; box-shadow: var(--shadow);">
-        <!-- 사이트 -->
-        <ins class="adsbygoogle"
-             style="display:block; width:100%;"
-             data-ad-client="ca-pub-8777128879154634"
-             data-ad-slot="4460948120"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-        
-        <!-- 광고 안내 표시 (애드센스 운영 규정 준수용) -->
-        <span style="font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: 0.1em; font-weight: 800;">ADVERTISEMENT</span>
-      </div>
+    <!-- 2. Create New Google Sheet Tab Modal -->
+    <div class="modal-overlay" id="create-sheet-modal">
+        <div class="modal-content notion-modal">
+            <div class="modal-header">
+                <h3>📊 구글 스프레드시트 새 시트(탭) 생성</h3>
+                <button class="btn-close" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleCreateNewSheetSubmit(event)" class="modal-form">
+                <div class="input-group">
+                    <label>새로 만들 시트(탭) 이름</label>
+                    <input type="text" id="new-sheet-name-input" placeholder="예: 2026_9월_가계부, 주원_적금통합장부" required>
+                </div>
+                <div class="input-group">
+                    <label>시트에 채워넣을 데이터 선택</label>
+                    <select id="new-sheet-data-type">
+                        <option value="all">📒 매일가계부 전체 통합 내역 (적금 + 지출 + 신규기입)</option>
+                        <option value="savings">🏦 적금/저축 누적 입금 장부 전체</option>
+                        <option value="hospital">🏥 조리원 & 병원비 지출 내역 전체</option>
+                        <option value="empty">📄 깔끔한 빈 가계부 표 양식만 생성 (헤더+합계수식 포함)</option>
+                    </select>
+                </div>
+                <div class="notion-callout-tip">
+                    💡 연결된 구글 스프레드시트 하단에 입력하신 이름의 <strong>새로운 시트 탭</strong>이 생성되며, 금액 합계 수식(<code>=SUM</code>)까지 자동으로 들어갑니다.
+                </div>
+                <div style="margin-top:0.65rem; padding:8px 12px; background:#f7f6f3; border-radius:6px; font-size:0.8rem; display:flex; align-items:center; justify-content:space-between;">
+                    <div>
+                        <span style="color:#787774;">연동 웹앱:</span>
+                        <strong id="sheet-modal-url-display" style="font-family:monospace; color:#2383e2; margin-left:4px;"></strong>
+                    </div>
+                    <button type="button" class="notion-btn notion-btn-default btn-xs" onclick="openUrlConfigModal()">URL 변경</button>
+                </div>
+                <div class="modal-actions" style="margin-top:1rem;">
+                    <button type="button" class="notion-btn notion-btn-default" onclick="closeAllModals()">취소</button>
+                    <button type="submit" class="notion-btn notion-btn-blue"><i class="fa-solid fa-cloud-arrow-up"></i> 구글 시트에 즉시 생성</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <section class="guide-note">
-      <div>
-        <p class="section-kicker">EXPERT REHABILITATION GUIDE</p>
-        <h2>제주 재활치료<br>성공 가이드</h2>
-        
-        <div class="guide-tabs" style="margin-top: 30px;">
-          <button class="guide-tab-btn active" data-tab="tab-call">1. 전화 문의 팁</button>
-          <button class="guide-tab-btn" data-tab="tab-recovery">2. 회복기 재활이란?</button>
-          <button class="guide-tab-btn" data-tab="tab-types">3. 기관 유형 비교</button>
+    <!-- Quick WebApp URL Configuration & Diagnostic Modal -->
+    <div class="modal-overlay" id="url-config-modal">
+        <div class="modal-content notion-modal" style="max-width:520px;">
+            <div class="modal-header">
+                <h3>🔗 구글 Apps Script 웹앱 URL 연결 & 진단</h3>
+                <button class="btn-close" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleQuickUrlSave(event)" class="modal-form">
+                <p style="font-size:0.84rem; color:var(--text-secondary); line-height:1.5;">
+                    구글 시트 <code>[확장 프로그램] &gt; [Apps Script]</code>에서 <strong>[새 배포]</strong> 후 발급받은 <strong>웹 앱 URL</strong>을 아래에 붙여넣어 주세요.
+                </p>
+                <div class="input-group">
+                    <label>Apps Script 웹 앱 URL</label>
+                    <input type="text" id="quick-url-input" class="url-text-input" placeholder="https://script.google.com/macros/s/.../exec" required style="width:100%;">
+                </div>
+                <div id="url-test-result" style="font-size:0.83rem; margin:0.35rem 0;"></div>
+                <div class="notion-callout-tip" style="font-size:0.8rem;">
+                    💡 <strong>배포 시 필수 체크:</strong><br>
+                    • 액세스 권한: <strong>[모든 사용자 (Anyone)]</strong> 선택<br>
+                    • 다음 사용자 권한으로 실행: <strong>[웹앱에 액세스하는 사용자]</strong> 또는 <strong>[나 (소유자)]</strong>
+                </div>
+                <div class="modal-actions" style="margin-top:1rem;">
+                    <button type="button" class="notion-btn notion-btn-default" onclick="closeAllModals()">닫기</button>
+                    <button type="button" class="notion-btn notion-btn-default" onclick="testCurrentWebAppUrl()">🔍 연결 진단 테스트</button>
+                    <button type="submit" class="notion-btn notion-btn-blue"><i class="fa-solid fa-check"></i> 저장 & 즉시 적용</button>
+                </div>
+            </form>
         </div>
-      </div>
-
-      <div class="guide-panes">
-        <!-- 탭 1: 전화 문의 팁 -->
-        <div class="guide-pane active" id="tab-call">
-          <h3>병원 전화 전 필수 체크리스트</h3>
-          <p>재활병원은 환자의 현재 상태와 치료 목적에 따라 입원 가능 여부가 결정됩니다. 문의 전 다음 4가지를 꼭 메모해 두세요.</p>
-          <ol style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 0; padding: 0; list-style: none; counter-reset: steps;">
-            <li style="position: relative; padding-left: 43px; counter-increment: steps;">
-              <span style="content: counter(steps); position: absolute; left: 0; display: grid; width: 30px; height: 30px; place-items: center; color: var(--navy-950); background: var(--mint); border-radius: 50%; font-size: 12px; font-weight: 900; line-height: 1;">1</span>
-              <strong>치료 대상 & 발병일</strong>
-              <span style="display: block; margin-top: 4px; color: rgba(255,255,255,.68); font-size: 13px;">환자의 질환명(뇌졸중, 척수손상 등), 수술일, 발병일을 정확히 알려주세요.</span>
-            </li>
-            <li style="position: relative; padding-left: 43px; counter-increment: steps;">
-              <span style="content: counter(steps); position: absolute; left: 0; display: grid; width: 30px; height: 30px; place-items: center; color: var(--navy-950); background: var(--mint); border-radius: 50%; font-size: 12px; font-weight: 900; line-height: 1;">2</span>
-              <strong>현재 환자 상태</strong>
-              <span style="display: block; margin-top: 4px; color: rgba(255,255,255,.68); font-size: 13px;">스스로 보행이 가능한지, 휠체어 이동을 하는지, 콧줄(피딩 튜브)이나 소변줄을 하셨는지 말해야 합니다.</span>
-            </li>
-            <li style="position: relative; padding-left: 43px; counter-increment: steps;">
-              <span style="content: counter(steps); position: absolute; left: 0; display: grid; width: 30px; height: 30px; place-items: center; color: var(--navy-950); background: var(--mint); border-radius: 50%; font-size: 12px; font-weight: 900; line-height: 1;">3</span>
-              <strong>치료 형태 선택</strong>
-              <span style="display: block; margin-top: 4px; color: rgba(255,255,255,.68); font-size: 13px;">매일 4~5시간 집중 치료를 받는 '입원', 매일 통원하는 '낮병동', 주 2~3회 방문하는 '외래' 중 선택합니다.</span>
-            </li>
-            <li style="position: relative; padding-left: 43px; counter-increment: steps;">
-              <span style="content: counter(steps); position: absolute; left: 0; display: grid; width: 30px; height: 30px; place-items: center; color: var(--navy-950); background: var(--mint); border-radius: 50%; font-size: 12px; font-weight: 900; line-height: 1;">4</span>
-              <strong>보험 적용 구분</strong>
-              <span style="display: block; margin-top: 4px; color: rgba(255,255,255,.68); font-size: 13px;">일반 건강보험 환자인지, 산재보험(근로복지공단 인증) 또는 자동차보험 대상자인지 먼저 밝혀주세요.</span>
-            </li>
-          </ol>
-        </div>
-
-        <!-- 탭 2: 회복기 재활이란? -->
-        <div class="guide-pane" id="tab-recovery">
-          <h3>보건복지부 지정 '회복기 재활의료기관'</h3>
-          <p>뇌졸중, 척수손상, 고관절·골반·대퇴 골절 환자 등이 수술 후 집중 재활을 통해 사회로 조기 복귀하도록 보건복지부가 엄격히 지정한 병원입니다.</p>
-          <div class="golden-box">
-            <h4>💡 집중재활 골든타임(입원 기한)을 꼭 확인하세요!</h4>
-            <p style="margin-bottom: 8px;">지정 병원에 기한 내 입원해야 하루 최대 4시간 집중재활 건강보험 혜택 및 간호간병통합서비스를 지원받을 수 있습니다.</p>
-            <ul style="margin: 0; padding-left: 20px; font-size: 12.5px; color: rgba(255, 255, 255, 0.9); line-height: 1.6;">
-              <li><b>뇌졸중 · 뇌손상</b>: 발병/수술 후 <b>90일 이내</b> 입원 (치료 기간 최대 180일)</li>
-              <li><b>척수 손상</b>: 발병/수술 후 <b>180일 이내</b> 입원 (치료 기간 최대 2년)</li>
-              <li><b>고관절 · 골반 · 대퇴 골절 및 치환술 (단일)</b>: 발병/수술 후 <b>30일 이내</b> 입원 (치료 기간 최대 30일)</li>
-              <li><b>다발 골절 (2부위 이상) · 하지 절단</b>: 발병/수술 후 <b>60일 이내</b> 입원 (치료 기간 최대 60일)</li>
-            </ul>
-          </div>
-          <p style="margin-top: 15px;">이 가이드에서 <strong>'회복기 지정'</strong> 필터를 선택하여 제주 내 보건복지부 지정 회복기 재활의료기관(제주권역재활병원)을 빠르게 확인해 보세요.</p>
-        </div>
-
-        <!-- 탭 3: 기관 유형 비교 -->
-        <div class="guide-pane" id="tab-types">
-          <h3>나에게 맞는 재활기관 유형 찾기</h3>
-          <p>재활이 필요한 단계와 환자군의 상태에 따라 알맞은 종별 기관을 선택해야 효율적인 치료가 가능합니다.</p>
-          <div class="compare-table-wrapper">
-            <table class="compare-table">
-              <thead>
-                <tr>
-                  <th>기관 유형</th>
-                  <th>주요 목적</th>
-                  <th>추천 환자군</th>
-                  <th>특징</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>대학/종합병원</strong></td>
-                  <td>급성기 치료 & 초기 재활</td>
-                  <td>수술 직후, 생체징후가 불안정한 환자</td>
-                  <td>검사 및 다학제 협진 용이, 장기 입원 불가</td>
-                </tr>
-                <tr>
-                  <td><strong>회복기 재활병원</strong></td>
-                  <td>집중 재활 & 기능 회복</td>
-                  <td>뇌졸중·척수손상·골절 수술 후 1~6개월 이내 환자</td>
-                  <td>1대1 맞춤 집중치료(일 4시간), 간호간병 통합 지원</td>
-                </tr>
-                <tr>
-                  <td><strong>재활 요양병원</strong></td>
-                  <td>장기 요양 & 완화 재활</td>
-                  <td>급성기가 지나 만성 관리가 필요한 고령 환자</td>
-                  <td>비교적 저렴한 간병비, 장기 입원 가능</td>
-                </tr>
-                <tr>
-                  <td><strong>재활/정형 의원</strong></td>
-                  <td>통증 관리 & 외래 도수</td>
-                  <td>통원 가능한 근골격계 통증, 경증 환자</td>
-                  <td>물리치료, 도수치료, 주사치료 중심의 외래</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="directory" aria-labelledby="directoryTitle">
-      <div class="section-heading">
-        <div>
-          <p class="section-kicker">REHABILITATION DIRECTORY</p>
-          <h2 id="directoryTitle">제주 재활기관 찾기</h2>
-        </div>
-        <div class="heading-actions">
-          <button class="icon-button" id="favoriteToggle" aria-pressed="false">☆ 관심기관만</button>
-          <button class="icon-button" id="printButton">인쇄</button>
-        </div>
-      </div>
-
-      <div class="filter-panel">
-        <div class="filter-grid">
-          <label>
-            <span>시·군</span>
-            <select id="districtFilter"><option value="">제주 전체</option></select>
-          </label>
-          <label>
-            <span>기관종별</span>
-            <select id="typeFilter"><option value="">전체 기관종별</option></select>
-          </label>
-          <label>
-            <span>검증수준</span>
-            <select id="verificationFilter">
-              <option value="">전체 검증수준</option>
-              <option value="verified">심평원·공식·홈페이지 확인</option>
-              <option value="call">전화확인 필요/후보</option>
-            </select>
-          </label>
-          <label>
-            <span>정렬</span>
-            <select id="sortFilter">
-              <option value="recommended">확인도 높은 순</option>
-              <option value="name">기관명순</option>
-              <option value="district">행정구역순</option>
-            </select>
-          </label>
-        </div>
-        <div class="active-row">
-          <div id="activeFilters" class="active-filters" aria-live="polite"></div>
-          <button id="resetButton" class="reset-button">조건 초기화</button>
-        </div>
-      </div>
-
-      <div class="results-toolbar">
-        <p><strong id="resultCount">14</strong>개 기관을 찾았습니다.</p>
-        <p class="result-hint">기관을 선택하면 전화·지도·상세 정보를 볼 수 있어요.</p>
-      </div>
-
-      <div id="results" class="result-grid" aria-live="polite"></div>
-      <div id="emptyState" class="empty-state" hidden>
-        <span aria-hidden="true">⌕</span>
-        <h3>검색 결과가 없습니다</h3>
-        <p>검색어를 줄이거나 필터를 초기화해 보세요.</p>
-        <button id="emptyReset">전체 기관 보기</button>
-      </div>
-    </section>
-
-    <!-- FAQ 자주 묻는 질문 섹션 (애드센스 승인 최적화 및 SEO 보강) -->
-    <section class="faq-section" aria-labelledby="faqTitle">
-      <h2 id="faqTitle">재활기관 이용 관련 자주 묻는 질문 (FAQ)</h2>
-      <div class="faq-container">
-        <details class="faq-item">
-          <summary>Q1. 보건복지부 지정 '회복기 재활의료기관'은 일반 요양병원과 무엇이 다른가요?</summary>
-          <div class="faq-content">
-            <p>보건복지부 지정 회복기 재활의료기관은 일반 요양병원에 비해 훨씬 엄격한 기준(재활의학과 전문의 및 재활 전문 물리치료사/작업치료사 인력 기준, 전문 재활 치료실 규격 등)을 통과한 병원입니다. 이곳에서는 환자의 조기 사회 및 가정 복귀를 목표로 하루 최대 4시간의 집중적인 1:1 맞춤형 재활치료를 건강보험 혜택과 함께 제공하며, 간호간병통합서비스를 통한 간병비 부담 경감 혜택도 함께 누릴 수 있습니다.</p>
-          </div>
-        </details>
-        <details class="faq-item">
-          <summary>Q2. 집중재활 치료를 받기 위한 골든타임(입원 제한 기한)이 있나요?</summary>
-          <div class="faq-content">
-            <p>네, 매우 중요합니다. 보건복지부 지정 재활의료기관에 입원하여 집중재활 건강보험 혜택을 받으려면 질환별로 정해진 발병일/수술일 기준 기한 내에 입원해야 합니다. 뇌졸중 및 뇌손상은 <b>발병 후 90일 이내</b>, 척수손상은 <b>180일 이내</b>, 고관절 및 대퇴골절은 <b>30일 이내</b>에 지정 병원에 입원해야 혜택을 받을 수 있으므로 골든타임을 넘기기 전 빠르게 문의하셔야 합니다.</p>
-          </div>
-        </details>
-        <details class="faq-item">
-          <summary>Q3. 산재보험 및 자동차보험 환자도 재활치료 지원을 받을 수 있나요?</summary>
-          <div class="faq-content">
-            <p>네, 가능합니다. 근로복지공단에서 선정한 <b>'산재보험 재활인증 의료기관'</b>의 경우 산업재해를 입은 근로자에게 적합한 집중 전문 재활 프로그램을 공단 지원을 통해 제공합니다. 또한 대부분의 재활 전문 기관들은 자동차보험을 통한 교통사고 집중 재활치료를 지원합니다. 본 서비스의 '산재 재활인증' 및 '자동차보험' 프리셋 필터를 이용하면 지원 가능한 제주 내 병원을 쉽게 선별할 수 있습니다.</p>
-          </div>
-        </details>
-        <details class="faq-item">
-          <summary>Q4. 입원 재활과 낮병동(주간재활)은 어떻게 다른가요?</summary>
-          <div class="faq-content">
-            <p><b>입원 재활</b>은 병원에 상주하며 24시간 의료진의 간호 및 집중 재활치료를 수행하는 형태입니다. 반면 <b>낮병동(주간재활)</b>은 하루 중 낮 시간(통상 6시간) 동안만 병원에 입원하여 집중 재활치료와 식사를 제공받고, 저녁에는 귀가하는 형태입니다. 낮병동은 환자가 일상 감각을 유지하면서 입원 치료에 준하는 집중 치료를 경제적으로 받을 수 있어 효율적입니다.</p>
-          </div>
-        </details>
-        <details class="faq-item">
-          <summary>Q5. 이 가이드의 데이터 출처와 신뢰도는 어떻게 되나요?</summary>
-          <div class="faq-content">
-            <p>본 제주 재활기관 찾기 가이드는 <b>건강보험심사평가원(HIRA)</b>의 등록 데이터, <b>보건복지부</b>의 지정 고시 자료, <b>근로복지공단</b>의 재활인증병원 목록 및 각 병원 홈페이지 공식 정보를 종합하여 작성되었습니다. 교차 검토를 거쳐 신뢰도를 유지하고 있으나, 병원의 실시간 병상 상태나 진료 가능 여부는 변동되므로 최종 입원 결정 전 반드시 병원 대표번호를 통한 유선 상담을 권장합니다.</p>
-          </div>
-        </details>
-      </div>
-    </section>
-
-  </main>
-
-  <footer>
-    <div style="display: flex; flex-direction: column; gap: 8px;">
-      <p style="margin: 0; line-height: 1.5; color: var(--muted);">자료 기준: 보건복지부 제3기 회복기 재활의료기관 고시, 근로복지공단 산재 재활인증 의료기관 목록, 건강보험심사평가원(HIRA) 공공데이터포털 및 병원 정보 서비스 (2026.07 교차검토)</p>
-      <p style="margin: 4px 0 0; font-size: 12.5px;">
-        <a href="about.html" style="color: var(--teal-800); font-weight: 800; text-decoration: none; margin-right: 8px;">서비스 소개</a> | 
-        <a href="privacy.html" style="color: var(--teal-800); font-weight: 800; text-decoration: none; margin-left: 8px; margin-right: 8px;">개인정보처리방침</a> | 
-        <a href="disclaimer.html" style="color: var(--teal-800); font-weight: 800; text-decoration: none; margin-left: 8px;">이용약관 및 면책조항</a>
-      </p>
-      <p style="margin: 6px 0 0; font-size: 11px; color: var(--muted);">&copy; 2026 제주 재활기관 찾기 가이드. All rights reserved.</p>
     </div>
-    <a href="#top" style="align-self: center; flex-shrink: 0; margin-left: 20px;">맨 위로 ↑</a>
-  </footer>
 
-  <dialog id="detailDialog" aria-labelledby="dialogTitle">
-    <div id="dialogContent"></div>
-  </dialog>
+    <!-- 3. Hospital Expense Add Modal -->
+    <div class="modal-overlay" id="hospital-expense-modal">
+        <div class="modal-content notion-modal">
+            <div class="modal-header">
+                <h3>🏥 조리원 · 병원비 지출 내역 추가</h3>
+                <button class="btn-close" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleHospitalExpenseSubmit(event)" class="modal-form">
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>결제 날짜</label>
+                        <input type="date" id="hosp-add-date" required>
+                    </div>
+                    <div class="input-group">
+                        <label>카테고리</label>
+                        <select id="hosp-add-category">
+                            <option value="병원비">병원비</option>
+                            <option value="조리원비">조리원비</option>
+                            <option value="산후도우미">산후도우미</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>결제수단 / 세부내용</label>
+                        <input type="text" id="hosp-add-details" placeholder="예: 준영(롯데카드) 진료비" required>
+                    </div>
+                    <div class="input-group">
+                        <label>지출 금액 (원)</label>
+                        <input type="number" id="hosp-add-amount" placeholder="예: 85000" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>비고 (보건소 제출/환불 메모)</label>
+                    <input type="text" id="hosp-add-note" placeholder="예: 보건소 환불 서류 제출 예정">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="notion-btn notion-btn-default" onclick="closeAllModals()">취소</button>
+                    <button type="submit" class="notion-btn notion-btn-blue">지출 등록 및 시트 반영</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  <dialog id="homepageDialog" aria-labelledby="homepageDialogTitle">
-    <div id="homepageDialogContent"></div>
-  </dialog>
+    <!-- 4. Schedule / Memo Entry Modal -->
+    <div class="modal-overlay" id="schedule-modal">
+        <div class="modal-content notion-modal">
+            <div class="modal-header">
+                <h3>📅 캘린더 일정 / 메모 작성</h3>
+                <button class="btn-close" id="schedule-modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="schedule-form" class="modal-form">
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>날짜</label>
+                        <input type="date" id="sched-date-input" required>
+                    </div>
+                    <div class="input-group">
+                        <label>시간</label>
+                        <input type="time" id="sched-time-input" value="11:00">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>카테고리</label>
+                    <select id="sched-category-select">
+                        <option value="일상업무">일상업무</option>
+                        <option value="적금입금">적금/저축입금</option>
+                        <option value="주요일정">주요일정</option>
+                        <option value="특이사항">특이사항</option>
+                        <option value="기타메모">기타메모</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>메모 내용</label>
+                    <textarea id="sched-content-input" rows="4" placeholder="일정 내용 및 메모를 입력하세요..." required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="notion-btn notion-btn-default" id="btn-sched-cancel">취소</button>
+                    <button type="submit" class="notion-btn notion-btn-blue">저장 및 시트 전송</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+    <!-- 5. New Product Registration Modal -->
+    <div class="modal-overlay" id="new-product-modal">
+        <div class="modal-content notion-modal">
+            <div class="modal-header">
+                <h3>🏦 신규 적금 / 저축 상품 등록</h3>
+                <button class="btn-close" id="new-product-modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="new-product-form" class="modal-form">
+                <div class="input-group">
+                    <label>적금/저축 상품명</label>
+                    <input type="text" id="new-prod-name" placeholder="예: 새마을금고 아기특판, 카카오뱅크 아이적금" required>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>약정 이율 / 금리</label>
+                        <input type="text" id="new-prod-rate" placeholder="예: 5.0%, 10.0%" value="5.0%">
+                    </div>
+                    <div class="input-group">
+                        <label>소유자 (명의)</label>
+                        <select id="new-prod-owner">
+                            <option value="주원">👶 주원</option>
+                            <option value="지헌">👩 지헌</option>
+                            <option value="준영">👨 준영</option>
+                            <option value="가족공용">🏠 가족공용</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>매달 목표 납입액(원)</label>
+                        <input type="number" id="new-prod-monthly" placeholder="300000" value="300000" required>
+                    </div>
+                    <div class="input-group">
+                        <label>현재 초기 입금액(원)</label>
+                        <input type="number" id="new-prod-initial" placeholder="0" value="300000">
+                    </div>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>시작일</label>
+                        <input type="text" id="new-prod-start" placeholder="2026. 8. 25" value="2026. 8. 25">
+                    </div>
+                    <div class="input-group">
+                        <label>만기일</label>
+                        <input type="text" id="new-prod-end" placeholder="2027. 8. 25" value="2027. 8. 25">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="notion-btn notion-btn-default" id="btn-new-prod-cancel">취소</button>
+                    <button type="submit" class="notion-btn notion-btn-blue">상품 등록 & 시트 반영</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. Product Detail History Modal -->
+    <div class="modal-overlay" id="product-detail-modal">
+        <div class="modal-content notion-modal" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3 id="product-detail-title">적금 상세 내역</h3>
+                <button class="btn-close" id="product-detail-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="product-detail-body"></div>
+        </div>
+    </div>
+
+    <!-- 7. Record Edit & Google Sheets Sync Modal -->
+    <div class="modal-overlay" id="edit-record-modal">
+        <div class="modal-content notion-modal">
+            <div class="modal-header">
+                <h3>✏️ 내역 수정 & 구글 시트 동기화</h3>
+                <button class="btn-close" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="edit-record-form" onsubmit="saveRecordEditDirect(event)" class="modal-form">
+                <input type="hidden" id="edit-record-index">
+                <div class="input-group">
+                    <label>적금/내역 상품명</label>
+                    <input type="text" id="edit-record-product" readonly>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>회차 / 월</label>
+                        <input type="text" id="edit-record-month" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>입금/결제 일자</label>
+                        <input type="text" id="edit-record-date" placeholder="2026. 8. 25" required>
+                    </div>
+                </div>
+                <div class="schedule-form-row">
+                    <div class="input-group">
+                        <label>금액 (원)</label>
+                        <input type="number" id="edit-record-amount" required>
+                    </div>
+                    <div class="input-group">
+                        <label>납입 상태</label>
+                        <select id="edit-record-status">
+                            <option value="deposited">🟢 입금 완료 (완납)</option>
+                            <option value="unpaid">🔴 미입금</option>
+                            <option value="scheduled">🟡 납입 예정</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>거래수단 / 비고</label>
+                    <input type="text" id="edit-record-memo" placeholder="예: 토스체크, 새마을금고 자동이체">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="notion-btn notion-btn-default" onclick="closeAllModals()">취소</button>
+                    <button type="submit" class="notion-btn notion-btn-blue">수정 저장 & 구글 시트 전송</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 8. KakaoTalk Notification Modal -->
+    <div class="modal-overlay" id="kakao-modal">
+        <div class="modal-content notion-modal">
+            <div class="modal-header">
+                <h3>💬 카카오톡 스마트 이체 & 만기 알림 센터</h3>
+                <button class="btn-close" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="kakao-modal-body" style="display:flex; flex-direction:column; gap:1rem;"></div>
+        </div>
+    </div>
+
+    <!-- 9. Change Password Modal -->
+    <div class="modal-overlay" id="change-password-modal">
+        <div class="modal-content notion-modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h3>🔑 계정 비밀번호 변경</h3>
+                <button class="btn-close" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handlePasswordChangeSubmit(event)" class="modal-form">
+                <div class="input-group">
+                    <label>현재 비밀번호</label>
+                    <input type="password" id="pwd-current" placeholder="현재 비밀번호 (초기: admin)" required>
+                </div>
+                <div class="input-group">
+                    <label>새 비밀번호</label>
+                    <input type="password" id="pwd-new" placeholder="새 비밀번호" required>
+                </div>
+                <div class="input-group">
+                    <label>새 비밀번호 확인</label>
+                    <input type="password" id="pwd-confirm" placeholder="새 비밀번호 다시 입력" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="notion-btn notion-btn-default" onclick="closeAllModals()">취소</button>
+                    <button type="submit" class="notion-btn notion-btn-blue">변경 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 10. Admin User Management Modal -->
+    <div class="modal-overlay" id="admin-user-management-modal">
+        <div class="modal-content notion-modal" style="max-width:780px;">
+            <div class="modal-header">
+                <h3>👑 지메일 회원가입 신청 & 권한 관리</h3>
+                <button class="btn-close" onclick="closeAllModals()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.85rem; gap:0.5rem; flex-wrap:wrap;">
+                <div style="display:flex; gap:0.35rem;">
+                    <button class="notion-btn notion-btn-blue btn-xs" id="user-filter-all" onclick="filterUserMgmtList('all')">전체</button>
+                    <button class="notion-btn notion-btn-default btn-xs" id="user-filter-pending" onclick="filterUserMgmtList('pending')">승인대기</button>
+                    <button class="notion-btn notion-btn-default btn-xs" id="user-filter-approved" onclick="filterUserMgmtList('approved')">승인완료</button>
+                </div>
+                <input type="text" id="user-search-input" onkeyup="renderAdminUserMgmtTable()" placeholder="이름/이메일 검색..." class="notion-inline-input" style="max-width:200px; border:1px solid var(--border-color); padding:0.3rem 0.6rem; border-radius:6px;">
+            </div>
+            <div class="notion-table-wrapper">
+                <table class="notion-db-table master-table">
+                    <thead>
+                        <tr><th>NO</th><th>성명</th><th>지메일</th><th>신청일</th><th>상태</th><th>권한 처리</th></tr>
+                    </thead>
+                    <tbody id="modal-admin-user-list-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 11. Authentication Modal (Hidden when logged in) -->
+    <div class="modal-overlay" id="auth-modal-overlay">
+        <div class="modal-content notion-modal" style="max-width: 440px;">
+            <div style="text-align: center; margin-bottom: 1.25rem;">
+                <div style="font-size: 2.2rem; margin-bottom: 0.4rem;">📒</div>
+                <h2 style="font-size: 1.3rem; font-weight: 800; color: #37352f;">매일가계부 워크스페이스</h2>
+                <p style="font-size: 0.82rem; color: #787774; margin-top: 0.25rem;">구글 지메일(@gmail.com) 계정으로 로그인해 주세요</p>
+            </div>
+
+            <div style="display: flex; gap: 0.4rem; background: #f1f1ef; padding: 0.25rem; border-radius: 8px; margin-bottom: 1rem;">
+                <button type="button" class="notion-btn notion-btn-blue" id="auth-tab-login" onclick="switchAuthMode('login')" style="flex:1; justify-content:center;">로그인</button>
+                <button type="button" class="notion-btn notion-btn-ghost" id="auth-tab-register" onclick="switchAuthMode('register')" style="flex:1; justify-content:center;">회원가입 신청</button>
+            </div>
+
+            <div id="auth-alert-box" style="display: none; padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.8rem; margin-bottom: 0.85rem;"></div>
+
+            <form id="auth-form-login" onsubmit="handleAuthLogin(event)" class="modal-form">
+                <div class="input-group">
+                    <label>구글 이메일 (@gmail.com)</label>
+                    <input type="email" id="login-email" value="rkstmtk@gmail.com" placeholder="user@gmail.com" required>
+                </div>
+                <div class="input-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="login-password" value="admin" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="notion-btn notion-btn-blue" style="width:100%; justify-content:center; padding:0.7rem;">
+                    워크스페이스 접속하기
+                </button>
+            </form>
+
+            <form id="auth-form-register" onsubmit="handleAuthRegister(event)" class="modal-form" style="display:none;">
+                <div class="input-group">
+                    <label>이름 / 성명</label>
+                    <input type="text" id="reg-name" placeholder="예: 지헌 / 준영" required>
+                </div>
+                <div class="input-group">
+                    <label>신청 지메일 주소 (@gmail.com)</label>
+                    <input type="email" id="reg-email" placeholder="example@gmail.com" required>
+                </div>
+                <div class="input-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="reg-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="notion-btn notion-btn-blue" style="width:100%; justify-content:center; padding:0.7rem;">
+                    회원가입 승인 신청
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
 </body>
 </html>
